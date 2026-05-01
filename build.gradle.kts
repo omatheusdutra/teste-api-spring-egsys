@@ -94,6 +94,7 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("com.ninja-squad:springmockk:$springMockkVersion")
     testImplementation("com.tngtech.archunit:archunit-junit5:$archUnitVersion")
+    testImplementation("org.springframework:spring-webflux")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:testcontainers")

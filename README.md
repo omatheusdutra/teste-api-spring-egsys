@@ -4,7 +4,8 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1, 2 e 3 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL e casos de uso da aplicacao.
+Etapas 0, 1, 2, 3 e 4 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso da aplicacao
+e API REST v1 com DTOs, Bean Validation, ProblemDetail, OpenAPI e testes web.
 
 ## Stack Base
 
@@ -24,6 +25,22 @@ tag `postgres` e excluida automaticamente do `test` local.
 ./gradlew check
 ./gradlew pitest
 ```
+
+## API REST v1
+
+Swagger UI: `/swagger-ui.html`
+
+Endpoints implementados:
+
+- `GET /api/v1/categorias`
+- `POST /api/v1/tarefas`
+- `GET /api/v1/tarefas/{id}`
+- `GET /api/v1/tarefas?cursor={cursor}&limit={1..100}`
+- `PUT /api/v1/tarefas/{id}`
+- `DELETE /api/v1/tarefas/{id}`
+
+Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
+cursor-based, evitando offset em colecoes grandes.
 
 ## Arquitetura
 
@@ -55,3 +72,4 @@ Rel(infra, redis, "RESP")
 | --- | --- |
 | [0001](docs/adr/0001-bootstrap-stack.md) | Bootstrap stack |
 | [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistencia PostgreSQL, Flyway e JPA |
+| [0003](docs/adr/0003-api-rest-problemdetail-cursor.md) | API REST com ProblemDetail e cursor pagination |
