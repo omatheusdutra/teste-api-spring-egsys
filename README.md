@@ -4,7 +4,7 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1 e 2 concluidas: bootstrap, dominio puro em TDD e persistencia PostgreSQL com Flyway, JPA e Testcontainers.
+Etapas 0, 1, 2 e 3 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL e casos de uso da aplicacao.
 
 ## Stack Base
 
@@ -22,6 +22,7 @@ tag `postgres` e excluida automaticamente do `test` local.
 
 ```bash
 ./gradlew check
+./gradlew pitest
 ```
 
 ## Arquitetura

@@ -167,7 +167,13 @@ detekt {
 }
 
 pitest {
-    targetClasses.set(setOf("br.com.egsys.tasks.domain.*", "br.com.egsys.tasks.infrastructure.security.*"))
+    targetClasses.set(
+        setOf(
+            "br.com.egsys.tasks.domain.*",
+            "br.com.egsys.tasks.application.usecase.*",
+            "br.com.egsys.tasks.infrastructure.security.*",
+        ),
+    )
     targetTests.set(setOf("br.com.egsys.tasks.*"))
     junit5PluginVersion.set("1.2.2")
     threads.set(4)
