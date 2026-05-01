@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.concurrent.TimeUnit
 
 plugins {
     kotlin("jvm") version "2.3.10"
@@ -28,13 +29,29 @@ val bouncyCastleVersion = "1.84"
 val logstashLogbackVersion = "9.0"
 val kotestVersion = "6.1.11"
 val mockkVersion = "1.14.9"
-val springMockkVersion = "5.0.1"
+val springMockkVersion = "4.0.2"
 val archUnitVersion = "1.4.1"
 val jacocoCoverageExclusions =
     listOf(
         "**/TasksApplication.class",
         "**/TasksApplicationKt.class",
     )
+val dockerProbeTimeoutSeconds = 3L
+
+fun isDockerAvailable(): Boolean =
+    runCatching {
+        val process =
+            ProcessBuilder("docker", "info", "--format", "{{.ServerVersion}}")
+                .redirectErrorStream(true)
+                .start()
+
+        if (!process.waitFor(dockerProbeTimeoutSeconds, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            return false
+        }
+
+        process.exitValue() == 0
+    }.getOrDefault(false)
 
 fun coverageClassDirectories() =
     files(
@@ -95,7 +112,13 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+    val dockerAvailable = isDockerAvailable()
+
+    useJUnitPlatform {
+        if (!dockerAvailable) {
+            excludeTags("postgres")
+        }
+    }
     systemProperty("spring.profiles.active", "test")
     finalizedBy(tasks.jacocoTestReport)
 }

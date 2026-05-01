@@ -4,7 +4,7 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapa 0 concluida: bootstrap Gradle/Kotlin, estrutura hexagonal, profiles, lint, testes iniciais e CI minimo.
+Etapas 0, 1 e 2 concluidas: bootstrap, dominio puro em TDD e persistencia PostgreSQL com Flyway, JPA e Testcontainers.
 
 ## Stack Base
 
@@ -17,7 +17,8 @@ Etapa 0 concluida: bootstrap Gradle/Kotlin, estrutura hexagonal, profiles, lint,
 
 ## Como Testar
 
-Pre-requisito: JDK 21.
+Pre-requisitos: JDK 21. Docker e necessario para executar os testes de persistencia com Testcontainers; sem Docker, a
+tag `postgres` e excluida automaticamente do `test` local.
 
 ```bash
 ./gradlew check
@@ -52,3 +53,4 @@ Rel(infra, redis, "RESP")
 | ADR | Decisao |
 | --- | --- |
 | [0001](docs/adr/0001-bootstrap-stack.md) | Bootstrap stack |
+| [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistencia PostgreSQL, Flyway e JPA |
