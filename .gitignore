@@ -1,0 +1,12 @@
+.gradle/
+.idea/
+.codex/
+build/
+out/
+*.iml
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+docker-compose.override.yml

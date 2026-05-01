@@ -1,0 +1,24 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/egsys_tasks_test
+    username: egsys_test
+    password: egsys_test
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        generate_statistics: true
+  flyway:
+    clean-disabled: false
+
+logging:
+  level:
+    br.com.egsys.tasks: DEBUG

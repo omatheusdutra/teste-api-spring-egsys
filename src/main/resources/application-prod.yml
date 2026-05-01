@@ -1,0 +1,30 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${EGSYS_DB_URL}
+    username: ${EGSYS_DB_USERNAME}
+    password: ${EGSYS_DB_PASSWORD}
+  data:
+    redis:
+      host: ${EGSYS_REDIS_HOST}
+      port: ${EGSYS_REDIS_PORT:6379}
+      password: ${EGSYS_REDIS_PASSWORD}
+      ssl:
+        enabled: ${EGSYS_REDIS_SSL:true}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+egsys:
+  security:
+    allowed-origins: ${EGSYS_ALLOWED_ORIGINS}
+    jwt:
+      private-key-location: ${EGSYS_JWT_PRIVATE_KEY_LOCATION}
+      public-key-location: ${EGSYS_JWT_PUBLIC_KEY_LOCATION}
+
+logging:
+  level:
+    root: INFO
+    br.com.egsys.tasks: INFO
