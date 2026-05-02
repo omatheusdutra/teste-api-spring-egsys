@@ -1,0 +1,15 @@
+meta {
+  name: 07 Task History
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tarefas/{{tarefaId}}/historico
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

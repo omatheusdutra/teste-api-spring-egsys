@@ -1,0 +1,15 @@
+meta {
+  name: 09 Delete Task
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/tarefas/{{tarefaId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

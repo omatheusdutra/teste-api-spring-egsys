@@ -1,0 +1,15 @@
+meta {
+  name: 06 Complete Task
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/tarefas/{{tarefaId}}/status/concluida
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
