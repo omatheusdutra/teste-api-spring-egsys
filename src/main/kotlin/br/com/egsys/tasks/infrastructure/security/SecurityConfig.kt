@@ -62,6 +62,8 @@ class SecurityConfig(
                     writeProblem(response, HttpStatus.FORBIDDEN, "Acesso negado", "Permissao insuficiente")
                 }
             }.authorizeHttpRequests {
+                // Public by design: friendly discovery page with links to API docs and local evaluation flow.
+                it.requestMatchers(HttpMethod.GET, "/").permitAll()
                 // Public by design: account bootstrap and token rotation must be reachable before authentication.
                 it.requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
