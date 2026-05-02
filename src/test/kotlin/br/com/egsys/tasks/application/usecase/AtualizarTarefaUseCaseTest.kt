@@ -29,7 +29,7 @@ class AtualizarTarefaUseCaseTest {
         val novaCategoria = categoria(id = otherCategoryId, descricao = "Trabalho")
         val novaDataHora = Instant.parse("2026-05-01T14:00:00Z")
         val captured = slot<Tarefa>()
-        every { tarefas.findById(taskId) } returns existente
+        every { tarefas.findById(taskId, ownerId) } returns existente
         every { categorias.findById(otherCategoryId) } returns novaCategoria
         every { tarefas.save(capture(captured)) } answers { firstArg() }
 
@@ -37,6 +37,7 @@ class AtualizarTarefaUseCaseTest {
             useCase.execute(
                 AtualizarTarefaCommand(
                     id = taskId.value,
+                    ownerId = ownerId.value,
                     titulo = " Enviar relatorio ",
                     descricao = " PDF executivo ",
                     categoriaId = otherCategoryId.value,
@@ -50,34 +51,34 @@ class AtualizarTarefaUseCaseTest {
         updated.dataHora shouldBe DataHoraTarefa.agendadaPara(novaDataHora, fixedClock)
         updated.atualizadaEm shouldBe fixedNow
         captured.captured shouldBe updated
-        verify(exactly = 1) { tarefas.findById(taskId) }
+        verify(exactly = 1) { tarefas.findById(taskId, ownerId) }
         verify(exactly = 1) { categorias.findById(otherCategoryId) }
         verify(exactly = 1) { tarefas.save(any()) }
     }
 
     @Test
     fun `throws when task does not exist`() {
-        every { tarefas.findById(taskId) } returns null
+        every { tarefas.findById(taskId, ownerId) } returns null
 
         assertThrows<TarefaNaoEncontradaException> {
             useCase.execute(command())
         }.shouldHaveMessage("tarefa nao encontrada: ${taskId.value}")
 
-        verify(exactly = 1) { tarefas.findById(taskId) }
+        verify(exactly = 1) { tarefas.findById(taskId, ownerId) }
         verify(exactly = 0) { categorias.findById(any()) }
         verify(exactly = 0) { tarefas.save(any()) }
     }
 
     @Test
     fun `throws when new category does not exist`() {
-        every { tarefas.findById(taskId) } returns tarefa()
+        every { tarefas.findById(taskId, ownerId) } returns tarefa()
         every { categorias.findById(categoryId) } returns null
 
         assertThrows<CategoriaNaoEncontradaException> {
             useCase.execute(command())
         }.shouldHaveMessage("categoria nao encontrada: ${categoryId.value}")
 
-        verify(exactly = 1) { tarefas.findById(taskId) }
+        verify(exactly = 1) { tarefas.findById(taskId, ownerId) }
         verify(exactly = 1) { categorias.findById(categoryId) }
         verify(exactly = 0) { tarefas.save(any()) }
     }
@@ -85,6 +86,7 @@ class AtualizarTarefaUseCaseTest {
     private fun command(): AtualizarTarefaCommand =
         AtualizarTarefaCommand(
             id = taskId.value,
+            ownerId = ownerId.value,
             titulo = "Lavar roupa",
             descricao = null,
             categoriaId = categoryId.value,

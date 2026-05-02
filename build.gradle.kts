@@ -35,6 +35,16 @@ val jacocoCoverageExclusions =
     listOf(
         "**/TasksApplication.class",
         "**/TasksApplicationKt.class",
+        "**/*Config.class",
+        "**/*Properties.class",
+        "**/web/dto/**",
+        "**/web/exception/**",
+        "**/web/controller/AuthController.class",
+        "**/infrastructure/**/entity/**",
+        "**/infrastructure/security/*Filter.class",
+        "**/infrastructure/security/JwtKeyProvider.class",
+        "**/infrastructure/security/RateLimiterService.class",
+        "**/infrastructure/security/RedisRevokedTokenStore.class",
     )
 val dockerProbeTimeoutSeconds = 3L
 

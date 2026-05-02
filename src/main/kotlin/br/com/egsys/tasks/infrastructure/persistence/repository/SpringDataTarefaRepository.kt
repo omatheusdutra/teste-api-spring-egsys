@@ -11,8 +11,17 @@ interface SpringDataTarefaRepository : JpaRepository<TarefaJpaEntity, UUID> {
     override fun findById(id: UUID): Optional<TarefaJpaEntity>
 
     @EntityGraph(attributePaths = ["categoria"])
-    fun findByIdAndExcluidaEmIsNull(id: UUID): TarefaJpaEntity?
+    fun findByIdAndOwnerIdAndExcluidaEmIsNull(
+        id: UUID,
+        ownerId: UUID,
+    ): TarefaJpaEntity?
 
     @EntityGraph(attributePaths = ["categoria"])
-    fun findAllByExcluidaEmIsNullOrderByDataHoraAscIdAsc(): List<TarefaJpaEntity>
+    fun findByIdAndOwnerId(
+        id: UUID,
+        ownerId: UUID,
+    ): TarefaJpaEntity?
+
+    @EntityGraph(attributePaths = ["categoria"])
+    fun findAllByOwnerIdAndExcluidaEmIsNullOrderByDataHoraAscIdAsc(ownerId: UUID): List<TarefaJpaEntity>
 }

@@ -52,6 +52,7 @@ class FlywayPersistenceIntegrationTest : PersistenceIntegrationTest() {
                 "idx_tarefas_categoria_id",
                 "idx_tarefas_data_hora_id_active",
                 "idx_tarefas_status_active",
+                "idx_tarefas_owner_data_hora_id_active",
             )
 
         jdbcTemplate.update(
@@ -61,10 +62,11 @@ class FlywayPersistenceIntegrationTest : PersistenceIntegrationTest() {
         )
         jdbcTemplate.update(
             """
-            insert into tarefas (id, titulo, descricao, categoria_id, data_hora, status, criada_em, atualizada_em)
-            values (?, ?, ?, ?, ?, ?, ?, ?)
+            insert into tarefas (id, owner_id, titulo, descricao, categoria_id, data_hora, status, criada_em, atualizada_em)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             tarefaId,
+            UUID.fromString("00000000-0000-0000-0000-000000000001"),
             "Validar FK",
             null,
             categoriaId,

@@ -22,10 +22,10 @@ class ExcluirTarefaUseCaseTest {
     fun `soft deletes active task and persists it`() {
         val tarefa = tarefa()
         val captured = slot<Tarefa>()
-        every { repository.findById(taskId) } returns tarefa
+        every { repository.findById(taskId, ownerId) } returns tarefa
         every { repository.save(capture(captured)) } answers { firstArg() }
 
-        val deleted = useCase.execute(taskId.value)
+        val deleted = useCase.execute(taskId.value, ownerId.value)
 
         deleted.excluidaEm shouldBe fixedNow
         captured.captured shouldBe deleted
@@ -33,19 +33,19 @@ class ExcluirTarefaUseCaseTest {
             listOf(
                 TarefaExcluida(tarefaId = taskId, occurredAt = fixedNow),
             )
-        verify(exactly = 1) { repository.findById(taskId) }
+        verify(exactly = 1) { repository.findById(taskId, ownerId) }
         verify(exactly = 1) { repository.save(any()) }
     }
 
     @Test
     fun `throws when task does not exist or is already deleted`() {
-        every { repository.findById(taskId) } returns null
+        every { repository.findById(taskId, ownerId) } returns null
 
         assertThrows<TarefaNaoEncontradaException> {
-            useCase.execute(taskId.value)
+            useCase.execute(taskId.value, ownerId.value)
         }.shouldHaveMessage("tarefa nao encontrada: ${taskId.value}")
 
-        verify(exactly = 1) { repository.findById(taskId) }
+        verify(exactly = 1) { repository.findById(taskId, ownerId) }
         verify(exactly = 0) { repository.save(any()) }
     }
 }

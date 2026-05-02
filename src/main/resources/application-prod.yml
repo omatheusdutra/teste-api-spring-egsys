@@ -20,9 +20,10 @@ spring:
 egsys:
   security:
     allowed-origins: ${EGSYS_ALLOWED_ORIGINS}
+    password-pepper: ${EGSYS_PASSWORD_PEPPER}
     jwt:
-      private-key-location: ${EGSYS_JWT_PRIVATE_KEY_LOCATION}
-      public-key-location: ${EGSYS_JWT_PUBLIC_KEY_LOCATION}
+      private-key: ${EGSYS_JWT_PRIVATE_KEY}
+      public-key: ${EGSYS_JWT_PUBLIC_KEY}
 
 logging:
   level:

@@ -18,6 +18,9 @@ import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.TarefaStatus
 import br.com.egsys.tasks.domain.model.Titulo
+import br.com.egsys.tasks.domain.model.UsuarioId
+import br.com.egsys.tasks.infrastructure.security.JwtService
+import br.com.egsys.tasks.infrastructure.security.RateLimiterService
 import br.com.egsys.tasks.web.exception.ApiExceptionHandler
 import br.com.egsys.tasks.web.mapper.CursorCodec
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -33,6 +36,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.client.MockMvcWebTestClient
@@ -49,6 +53,8 @@ import java.util.UUID
 @WebMvcTest(controllers = [CategoriaController::class, TarefaController::class])
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiExceptionHandler::class)
+@WithMockUser(username = "018f95df-0c7b-7af2-a199-447f82f36914", roles = ["USER"])
+@Suppress("UnusedPrivateProperty")
 class RestApiWebTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -73,6 +79,12 @@ class RestApiWebTest {
 
     @MockkBean
     private lateinit var excluirTarefa: ExcluirTarefaUseCase
+
+    @MockkBean
+    private lateinit var jwtService: JwtService
+
+    @MockkBean
+    private lateinit var rateLimiter: RateLimiterService
 
     private lateinit var webTestClient: WebTestClient
 
@@ -120,13 +132,14 @@ class RestApiWebTest {
             .andExpect(jsonPath("$.titulo").value("Pagar aluguel"))
 
         command.captured.titulo shouldBe "Pagar aluguel"
+        command.captured.ownerId shouldBe ownerUuid
         command.captured.categoriaId shouldBe casa.id.value
         command.captured.dataHora shouldBe futureDate
     }
 
     @Test
     fun `gets task by id with WebTestClient`() {
-        every { buscarTarefa.execute(taskUuid) } returns tarefa()
+        every { buscarTarefa.execute(taskUuid, ownerUuid) } returns tarefa()
 
         webTestClient
             .get()
@@ -138,12 +151,12 @@ class RestApiWebTest {
             .jsonPath("$.categoria.descricao")
             .isEqualTo("Casa")
 
-        verify(exactly = 1) { buscarTarefa.execute(taskUuid) }
+        verify(exactly = 1) { buscarTarefa.execute(taskUuid, ownerUuid) }
     }
 
     @Test
     fun `lists tasks with cursor pagination`() {
-        every { listarTarefas.execute() } returns
+        every { listarTarefas.execute(ownerUuid) } returns
             listOf(
                 tarefa(titulo = "Segunda", dataHora = futureDate.plusSeconds(60)),
                 tarefa(titulo = "Primeira", dataHora = futureDate),
@@ -161,7 +174,7 @@ class RestApiWebTest {
         val primeira = tarefa(titulo = "Primeira", id = taskUuid, dataHora = futureDate)
         val mesmoInstanteDepois = tarefa(titulo = "Mesmo instante", id = taskUuidAfter, dataHora = futureDate)
         val depois = tarefa(titulo = "Depois", id = taskUuidLater, dataHora = futureDate.plusSeconds(60))
-        every { listarTarefas.execute() } returns listOf(depois, primeira, mesmoInstanteDepois)
+        every { listarTarefas.execute(ownerUuid) } returns listOf(depois, primeira, mesmoInstanteDepois)
 
         mockMvc
             .perform(get("/api/v1/tarefas").param("cursor", CursorCodec.encode(primeira)).param("limit", "10"))
@@ -173,7 +186,7 @@ class RestApiWebTest {
 
     @Test
     fun `returns empty page without next cursor`() {
-        every { listarTarefas.execute() } returns emptyList()
+        every { listarTarefas.execute(ownerUuid) } returns emptyList()
 
         mockMvc
             .perform(get("/api/v1/tarefas"))
@@ -196,19 +209,20 @@ class RestApiWebTest {
             .andExpect(jsonPath("$.titulo").value("Enviar relatorio"))
 
         command.captured.id shouldBe taskUuid
+        command.captured.ownerId shouldBe ownerUuid
         command.captured.titulo shouldBe "Enviar relatorio"
         command.captured.categoriaId shouldBe trabalho.id.value
     }
 
     @Test
     fun `soft deletes task`() {
-        every { excluirTarefa.execute(taskUuid) } returns tarefa()
+        every { excluirTarefa.execute(taskUuid, ownerUuid) } returns tarefa()
 
         mockMvc
             .perform(delete("/api/v1/tarefas/$taskUuid"))
             .andExpect(status().isNoContent)
 
-        verify(exactly = 1) { excluirTarefa.execute(taskUuid) }
+        verify(exactly = 1) { excluirTarefa.execute(taskUuid, ownerUuid) }
     }
 
     @Test
@@ -225,7 +239,7 @@ class RestApiWebTest {
 
     @Test
     fun `returns ProblemDetail for not found task`() {
-        every { buscarTarefa.execute(taskUuid) } throws TarefaNaoEncontradaException(taskUuid)
+        every { buscarTarefa.execute(taskUuid, ownerUuid) } throws TarefaNaoEncontradaException(taskUuid)
 
         mockMvc
             .perform(get("/api/v1/tarefas/$taskUuid"))
@@ -236,7 +250,7 @@ class RestApiWebTest {
 
     @Test
     fun `returns ProblemDetail for invalid cursor`() {
-        every { listarTarefas.execute() } returns emptyList()
+        every { listarTarefas.execute(ownerUuid) } returns emptyList()
 
         mockMvc
             .perform(get("/api/v1/tarefas").param("cursor", "not-a-cursor"))
@@ -291,6 +305,7 @@ class RestApiWebTest {
 
     private companion object {
         val taskUuid: UUID = UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911")
+        val ownerUuid: UUID = UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36914")
         val taskUuidAfter: UUID = UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36912")
         val taskUuidLater: UUID = UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36913")
         val futureDate: Instant = Instant.parse("2030-05-01T13:00:00Z")
@@ -312,6 +327,7 @@ class RestApiWebTest {
         ): Tarefa =
             Tarefa.reconstituir(
                 id = TarefaId.from(id),
+                ownerId = UsuarioId.from(ownerUuid),
                 titulo = Titulo.of(titulo),
                 descricao = Descricao.of("Vencimento do contrato residencial"),
                 categoria = casa,

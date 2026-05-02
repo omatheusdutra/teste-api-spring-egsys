@@ -27,6 +27,8 @@ class TarefaJpaEntity(
     @Id
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     var id: UUID? = null,
+    @Column(name = "owner_id", nullable = false, columnDefinition = "uuid")
+    var ownerId: UUID? = null,
     @Column(name = "titulo", nullable = false, length = 200)
     var titulo: String = "",
     @Column(name = "descricao", length = 2_000)

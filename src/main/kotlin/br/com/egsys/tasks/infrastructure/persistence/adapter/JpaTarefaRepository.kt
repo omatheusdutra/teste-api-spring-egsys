@@ -2,6 +2,7 @@ package br.com.egsys.tasks.infrastructure.persistence.adapter
 
 import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
+import br.com.egsys.tasks.domain.model.UsuarioId
 import br.com.egsys.tasks.domain.port.TarefaRepository
 import br.com.egsys.tasks.infrastructure.persistence.mapper.TarefaJpaMapper
 import br.com.egsys.tasks.infrastructure.persistence.repository.SpringDataCategoriaRepository
@@ -23,19 +24,24 @@ class JpaTarefaRepository(
         return TarefaJpaMapper.toDomain(repository.saveAndFlush(entity))
     }
 
-    override fun findById(id: TarefaId): Tarefa? =
+    override fun findById(
+        id: TarefaId,
+        ownerId: UsuarioId,
+    ): Tarefa? =
         repository
-            .findByIdAndExcluidaEmIsNull(id.value)
+            .findByIdAndOwnerIdAndExcluidaEmIsNull(id.value, ownerId.value)
             ?.let(TarefaJpaMapper::toDomain)
 
-    override fun findByIdIncludingDeleted(id: TarefaId): Tarefa? =
+    override fun findByIdIncludingDeleted(
+        id: TarefaId,
+        ownerId: UsuarioId,
+    ): Tarefa? =
         repository
-            .findById(id.value)
-            .map(TarefaJpaMapper::toDomain)
-            .orElse(null)
+            .findByIdAndOwnerId(id.value, ownerId.value)
+            ?.let(TarefaJpaMapper::toDomain)
 
-    override fun findAllActive(): List<Tarefa> =
+    override fun findAllActive(ownerId: UsuarioId): List<Tarefa> =
         repository
-            .findAllByExcluidaEmIsNullOrderByDataHoraAscIdAsc()
+            .findAllByOwnerIdAndExcluidaEmIsNullOrderByDataHoraAscIdAsc(ownerId.value)
             .map(TarefaJpaMapper::toDomain)
 }

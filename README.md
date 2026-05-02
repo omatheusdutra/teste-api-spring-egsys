@@ -4,8 +4,8 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1, 2, 3 e 4 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso da aplicacao
-e API REST v1 com DTOs, Bean Validation, ProblemDetail, OpenAPI e testes web.
+Etapas 0, 1, 2, 3, 4 e 5 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
+API REST v1 e seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao e rate limiting.
 
 ## Stack Base
 
@@ -32,6 +32,11 @@ Swagger UI: `/swagger-ui.html`
 
 Endpoints implementados:
 
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/revoke-all/{userId}` (`ROLE_ADMIN`)
 - `GET /api/v1/categorias`
 - `POST /api/v1/tarefas`
 - `GET /api/v1/tarefas/{id}`
@@ -41,6 +46,18 @@ Endpoints implementados:
 
 Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
 cursor-based, evitando offset em colecoes grandes.
+
+## Superficie de Ataque
+
+| Vetor | Defesa implementada | Teste |
+| --- | --- | --- |
+| JWT `alg=none` / HS256 | rejeicao explicita de algoritmo diferente de RS256 antes da assinatura | `AuthenticationTests` |
+| Token expirado, adulterado, iss/aud errado ou JTI revogado | validacao rigorosa de claims + blacklist Redis por JTI | `AuthenticationTests` |
+| Refresh token reutilizado | rotacao a cada uso e revogacao da familia | `RefreshTokenReuseTests` |
+| IDOR em tarefas | `owner_id` no dominio, use cases e queries de repositorio | `TarefaJpaRepositoryIntegrationTest` |
+| Acesso USER a endpoint ADMIN | RBAC com `@PreAuthorize` | `AuthorizationAndHeadersTests` |
+| Brute force | rate limiting por IP/usuario com `Retry-After` | `AuthorizationAndHeadersTests` |
+| Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` |
 
 ## Arquitetura
 
@@ -73,3 +90,4 @@ Rel(infra, redis, "RESP")
 | [0001](docs/adr/0001-bootstrap-stack.md) | Bootstrap stack |
 | [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistencia PostgreSQL, Flyway e JPA |
 | [0003](docs/adr/0003-api-rest-problemdetail-cursor.md) | API REST com ProblemDetail e cursor pagination |
+| [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Seguranca JWT RS256, RBAC e anti-IDOR |

@@ -3,6 +3,11 @@ package br.com.egsys.tasks.web.exception
 import br.com.egsys.tasks.application.exception.CategoriaNaoEncontradaException
 import br.com.egsys.tasks.application.exception.TarefaNaoEncontradaException
 import br.com.egsys.tasks.domain.exception.DomainException
+import br.com.egsys.tasks.infrastructure.security.EmailAlreadyRegisteredException
+import br.com.egsys.tasks.infrastructure.security.InvalidCredentialsException
+import br.com.egsys.tasks.infrastructure.security.InvalidTokenException
+import br.com.egsys.tasks.infrastructure.security.RateLimitExceededException
+import br.com.egsys.tasks.infrastructure.security.WeakPasswordException
 import br.com.egsys.tasks.web.mapper.InvalidCursorException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpHeaders
@@ -11,6 +16,7 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.validation.FieldError
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -22,6 +28,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 @RestControllerAdvice
+@Suppress("TooManyFunctions")
 class ApiExceptionHandler : ResponseEntityExceptionHandler() {
     override fun handleMethodArgumentNotValid(
         ex: MethodArgumentNotValidException,
@@ -92,6 +99,29 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail =
         problem(HttpStatus.BAD_REQUEST, "Parametro invalido", "Parametro ${ex.name} invalido")
 
+    @ExceptionHandler(InvalidCredentialsException::class, InvalidTokenException::class)
+    fun handleUnauthorized(ex: RuntimeException): ProblemDetail =
+        problem(HttpStatus.UNAUTHORIZED, "Nao autenticado", requireNotNull(ex.message))
+
+    @ExceptionHandler(WeakPasswordException::class, EmailAlreadyRegisteredException::class)
+    fun handleSecurityBadRequest(ex: RuntimeException): ProblemDetail =
+        problem(HttpStatus.BAD_REQUEST, "Requisicao invalida", requireNotNull(ex.message))
+
+    @ExceptionHandler(RateLimitExceededException::class)
+    fun handleRateLimit(ex: RateLimitExceededException): ResponseEntity<ProblemDetail> =
+        ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .header(HttpHeaders.RETRY_AFTER, ex.retryAfterSeconds.toString())
+            .body(problem(HttpStatus.TOO_MANY_REQUESTS, "Limite de requisicoes excedido", "Tente novamente mais tarde"))
+
+    @ExceptionHandler(AccessDeniedException::class)
+    @Suppress("ktlint:standard:function-expression-body")
+    fun handleAccessDenied(
+        @Suppress("UnusedParameter") ex: AccessDeniedException,
+    ): ProblemDetail {
+        return problem(HttpStatus.FORBIDDEN, "Acesso negado", "Permissao insuficiente")
+    }
+
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolation(ex: ConstraintViolationException): ProblemDetail {
         val problem = problem(HttpStatus.BAD_REQUEST, "Parametro invalido", "Parametros de requisicao invalidos")
@@ -105,6 +135,14 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
             },
         )
         return problem
+    }
+
+    @ExceptionHandler(Exception::class)
+    @Suppress("ktlint:standard:function-expression-body")
+    fun handleUnexpected(
+        @Suppress("UnusedParameter") ex: Exception,
+    ): ProblemDetail {
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno", "Erro inesperado ao processar requisicao")
     }
 
     private fun problem(

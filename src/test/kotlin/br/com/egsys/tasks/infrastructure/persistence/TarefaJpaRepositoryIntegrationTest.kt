@@ -7,6 +7,7 @@ import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.TarefaStatus
 import br.com.egsys.tasks.domain.model.Titulo
+import br.com.egsys.tasks.domain.model.UsuarioId
 import br.com.egsys.tasks.domain.port.CategoriaRepository
 import br.com.egsys.tasks.domain.port.TarefaRepository
 import br.com.egsys.tasks.support.PersistenceIntegrationTest
@@ -26,6 +27,8 @@ import java.util.UUID
 class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
     private val now = Instant.parse("2026-05-01T12:00:00Z")
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
+    private val ownerId = UsuarioId.from(UUID.fromString("00000000-0000-0000-0000-000000000001"))
+    private val otherOwnerId = UsuarioId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36999"))
 
     @Autowired
     private lateinit var tarefas: TarefaRepository
@@ -45,9 +48,10 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
             )
 
         val saved = tarefas.save(tarefa)
-        val restored = tarefas.findById(tarefa.id).shouldNotBeNull()
+        val restored = tarefas.findById(tarefa.id, ownerId).shouldNotBeNull()
 
         saved.id shouldBe tarefa.id
+        restored.ownerId shouldBe ownerId
         restored.titulo shouldBe Titulo.of("Pagar aluguel")
         restored.descricao shouldBe Descricao.of("Criada pelo teste de persistencia")
         restored.categoria shouldBe categoria
@@ -88,7 +92,8 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
         deleted.excluir(Clock.fixed(Instant.parse("2026-05-01T12:10:00Z"), ZoneOffset.UTC))
         tarefas.save(deleted)
 
-        tarefas.findAllActive().map { it.id } shouldContainExactly listOf(first.id, second.id)
+        tarefas.findAllActive(ownerId).map { it.id } shouldContainExactly listOf(first.id, second.id)
+        tarefas.findAllActive(otherOwnerId) shouldBe emptyList()
     }
 
     @Test
@@ -107,8 +112,9 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
         tarefa.excluir(deleteClock)
         tarefas.save(tarefa)
 
-        tarefas.findById(tarefa.id).shouldBeNull()
-        tarefas.findByIdIncludingDeleted(tarefa.id).shouldNotBeNull().excluidaEm shouldBe deleteClock.instant()
+        tarefas.findById(tarefa.id, ownerId).shouldBeNull()
+        tarefas.findByIdIncludingDeleted(tarefa.id, ownerId).shouldNotBeNull().excluidaEm shouldBe deleteClock.instant()
+        tarefas.findByIdIncludingDeleted(tarefa.id, otherOwnerId).shouldBeNull()
     }
 
     private fun categoria(descricao: String): Categoria = categorias.findAll().first { it.descricao.value == descricao }
@@ -122,6 +128,7 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
         val tarefa =
             Tarefa.criar(
                 id = TarefaId.from(UUID.fromString(id)),
+                ownerId = ownerId,
                 titulo = Titulo.of(titulo),
                 descricao = Descricao.of("Criada pelo teste de persistencia"),
                 categoria = categoria,

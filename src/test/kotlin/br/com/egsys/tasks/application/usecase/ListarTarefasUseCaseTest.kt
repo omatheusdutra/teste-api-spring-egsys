@@ -18,10 +18,10 @@ class ListarTarefasUseCaseTest {
                 tarefa(titulo = "Primeira"),
                 tarefa(titulo = "Segunda"),
             )
-        every { repository.findAllActive() } returns tarefas
+        every { repository.findAllActive(ownerId) } returns tarefas
 
-        useCase.execute() shouldBe tarefas
+        useCase.execute(ownerId.value) shouldBe tarefas
 
-        verify(exactly = 1) { repository.findAllActive() }
+        verify(exactly = 1) { repository.findAllActive(ownerId) }
     }
 }

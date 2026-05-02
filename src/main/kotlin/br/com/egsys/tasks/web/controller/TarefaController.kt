@@ -8,6 +8,7 @@ import br.com.egsys.tasks.application.usecase.CriarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ExcluirTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ListarTarefasUseCase
 import br.com.egsys.tasks.domain.model.Tarefa
+import br.com.egsys.tasks.infrastructure.security.currentUserId
 import br.com.egsys.tasks.web.dto.AtualizarTarefaRequest
 import br.com.egsys.tasks.web.dto.CriarTarefaRequest
 import br.com.egsys.tasks.web.dto.TarefaPageResponse
@@ -23,6 +24,8 @@ import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -49,6 +52,7 @@ class TarefaController(
     private val excluirTarefa: ExcluirTarefaUseCase,
 ) {
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Cria uma tarefa")
     fun criar(
         @Valid @RequestBody request: CriarTarefaRequest,
@@ -56,6 +60,7 @@ class TarefaController(
         val tarefa =
             criarTarefa.execute(
                 CriarTarefaCommand(
+                    ownerId = currentUserId(),
                     titulo = requireNotNull(request.titulo),
                     descricao = request.descricao,
                     categoriaId = requireNotNull(request.categoriaId),
@@ -73,12 +78,14 @@ class TarefaController(
     }
 
     @GetMapping("/{id:[0-9a-fA-F\\-]{36}}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Busca uma tarefa ativa por ID")
     fun buscar(
         @PathVariable id: UUID,
-    ): TarefaResponse = buscarTarefa.execute(id).toResponse()
+    ): TarefaResponse = buscarTarefa.execute(id, currentUserId()).toResponse()
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Lista tarefas ativas com paginacao cursor-based")
     fun listar(
         @RequestParam(required = false) cursor: String?,
@@ -87,7 +94,7 @@ class TarefaController(
         val decodedCursor = cursor?.let(CursorCodec::decode)
         val ordered =
             listarTarefas
-                .execute()
+                .execute(currentUserId())
                 .sortedWith(compareBy<Tarefa> { it.dataHora.value }.thenBy { it.id.value })
         val pageSource = ordered.after(decodedCursor)
         val items = pageSource.take(limit)
@@ -99,6 +106,7 @@ class TarefaController(
     }
 
     @PutMapping("/{id:[0-9a-fA-F\\-]{36}}", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Atualiza uma tarefa ativa")
     fun atualizar(
         @PathVariable id: UUID,
@@ -108,6 +116,7 @@ class TarefaController(
             .execute(
                 AtualizarTarefaCommand(
                     id = id,
+                    ownerId = currentUserId(),
                     titulo = requireNotNull(request.titulo),
                     descricao = request.descricao,
                     categoriaId = requireNotNull(request.categoriaId),
@@ -116,13 +125,16 @@ class TarefaController(
             ).toResponse()
 
     @DeleteMapping("/{id:[0-9a-fA-F\\-]{36}}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Exclui uma tarefa ativa usando soft delete")
     fun excluir(
         @PathVariable id: UUID,
     ) {
-        excluirTarefa.execute(id)
+        excluirTarefa.execute(id, currentUserId())
     }
+
+    private fun currentUserId(): UUID = SecurityContextHolder.getContext().authentication.currentUserId()
 
     private fun List<Tarefa>.after(cursor: TarefaCursor?): List<Tarefa> {
         if (cursor == null) {

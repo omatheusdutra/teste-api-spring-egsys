@@ -8,6 +8,7 @@ import br.com.egsys.tasks.domain.model.DescricaoCategoria
 import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.Titulo
+import br.com.egsys.tasks.domain.model.UsuarioId
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -18,6 +19,7 @@ internal val fixedClock: Clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
 internal val taskId: TarefaId = TarefaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911"))
 internal val categoryId: CategoriaId = CategoriaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36912"))
 internal val otherCategoryId: CategoriaId = CategoriaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36913"))
+internal val ownerId: UsuarioId = UsuarioId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36914"))
 internal val scheduledAt: Instant = Instant.parse("2026-05-01T13:00:00Z")
 
 internal fun categoria(
@@ -39,6 +41,7 @@ internal fun tarefa(
     val tarefa =
         Tarefa.criar(
             id = id,
+            ownerId = ownerId,
             titulo = Titulo.of(titulo),
             descricao = Descricao.of(descricao),
             categoria = categoria,

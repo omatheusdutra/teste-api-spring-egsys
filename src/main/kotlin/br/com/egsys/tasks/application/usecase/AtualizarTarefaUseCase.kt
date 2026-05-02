@@ -8,6 +8,7 @@ import br.com.egsys.tasks.domain.model.Descricao
 import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.Titulo
+import br.com.egsys.tasks.domain.model.UsuarioId
 import br.com.egsys.tasks.domain.port.CategoriaRepository
 import br.com.egsys.tasks.domain.port.TarefaRepository
 import java.time.Clock
@@ -19,8 +20,9 @@ class AtualizarTarefaUseCase(
 ) {
     fun execute(command: AtualizarTarefaCommand): Tarefa {
         val tarefaId = TarefaId.from(command.id)
+        val ownerId = UsuarioId.from(command.ownerId)
         val categoriaId = CategoriaId.from(command.categoriaId)
-        val tarefa = tarefas.findById(tarefaId) ?: throw TarefaNaoEncontradaException(command.id)
+        val tarefa = tarefas.findById(tarefaId, ownerId) ?: throw TarefaNaoEncontradaException(command.id)
         val categoria = categorias.findById(categoriaId) ?: throw CategoriaNaoEncontradaException(command.categoriaId)
 
         tarefa.atualizar(

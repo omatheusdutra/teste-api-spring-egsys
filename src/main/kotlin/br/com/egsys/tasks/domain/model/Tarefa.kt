@@ -7,6 +7,7 @@ import java.time.Instant
 @Suppress("LongParameterList", "TooManyFunctions")
 class Tarefa private constructor(
     val id: TarefaId,
+    val ownerId: UsuarioId,
     titulo: Titulo,
     descricao: Descricao?,
     categoria: Categoria,
@@ -170,6 +171,7 @@ class Tarefa private constructor(
     companion object {
         fun criar(
             id: TarefaId,
+            ownerId: UsuarioId,
             titulo: Titulo,
             descricao: Descricao?,
             categoria: Categoria,
@@ -180,6 +182,7 @@ class Tarefa private constructor(
 
             return Tarefa(
                 id = id,
+                ownerId = ownerId,
                 titulo = titulo,
                 descricao = descricao,
                 categoria = categoria,
@@ -194,6 +197,7 @@ class Tarefa private constructor(
 
         fun reconstituir(
             id: TarefaId,
+            ownerId: UsuarioId,
             titulo: Titulo,
             descricao: Descricao?,
             categoria: Categoria,
@@ -205,6 +209,7 @@ class Tarefa private constructor(
         ): Tarefa =
             Tarefa(
                 id = id,
+                ownerId = ownerId,
                 titulo = titulo,
                 descricao = descricao,
                 categoria = categoria,

@@ -17,21 +17,21 @@ class BuscarTarefaUseCaseTest {
     @Test
     fun `returns active task by id`() {
         val tarefa = tarefa()
-        every { repository.findById(taskId) } returns tarefa
+        every { repository.findById(taskId, ownerId) } returns tarefa
 
-        useCase.execute(taskId.value) shouldBe tarefa
+        useCase.execute(taskId.value, ownerId.value) shouldBe tarefa
 
-        verify(exactly = 1) { repository.findById(taskId) }
+        verify(exactly = 1) { repository.findById(taskId, ownerId) }
     }
 
     @Test
     fun `throws when task does not exist or is deleted`() {
-        every { repository.findById(taskId) } returns null
+        every { repository.findById(taskId, ownerId) } returns null
 
         assertThrows<TarefaNaoEncontradaException> {
-            useCase.execute(taskId.value)
+            useCase.execute(taskId.value, ownerId.value)
         }.shouldHaveMessage("tarefa nao encontrada: ${taskId.value}")
 
-        verify(exactly = 1) { repository.findById(taskId) }
+        verify(exactly = 1) { repository.findById(taskId, ownerId) }
     }
 }

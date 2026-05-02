@@ -17,6 +17,7 @@ class TarefaTest {
     private val now: Instant = Instant.parse("2026-05-01T12:00:00Z")
     private val clock: Clock = Clock.fixed(now, ZoneOffset.UTC)
     private val later: Instant = Instant.parse("2026-05-01T13:00:00Z")
+    private val ownerId = UsuarioId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36914"))
     private val categoria =
         Categoria(
             id = CategoriaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36912")),
@@ -28,6 +29,7 @@ class TarefaTest {
         val tarefa = novaTarefa()
 
         tarefa.id.value shouldBe UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911")
+        tarefa.ownerId shouldBe ownerId
         tarefa.titulo shouldBe Titulo.of("Lavar roupa")
         tarefa.descricao shouldBe Descricao.of("Separar roupas claras")
         tarefa.categoria shouldBe categoria
@@ -101,6 +103,7 @@ class TarefaTest {
         val tarefa =
             Tarefa.reconstituir(
                 id = TarefaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911")),
+                ownerId = ownerId,
                 titulo = Titulo.of("Lavar roupa"),
                 descricao = null,
                 categoria = categoria,
@@ -243,6 +246,7 @@ class TarefaTest {
         val tarefa =
             Tarefa.reconstituir(
                 id = TarefaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911")),
+                ownerId = ownerId,
                 titulo = Titulo.of("Historico"),
                 descricao = null,
                 categoria = categoria,
@@ -278,6 +282,7 @@ class TarefaTest {
     private fun novaTarefa(): Tarefa =
         Tarefa.criar(
             id = TarefaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36911")),
+            ownerId = ownerId,
             titulo = Titulo.of("Lavar roupa"),
             descricao = Descricao.of("Separar roupas claras"),
             categoria = categoria,

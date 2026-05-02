@@ -9,6 +9,7 @@ import br.com.egsys.tasks.domain.model.Tarefa
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.TarefaStatus
 import br.com.egsys.tasks.domain.model.Titulo
+import br.com.egsys.tasks.domain.model.UsuarioId
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -46,6 +47,7 @@ class CursorCodecTest {
         val tarefa: Tarefa =
             Tarefa.reconstituir(
                 id = TarefaId.from(taskId),
+                ownerId = UsuarioId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36914")),
                 titulo = Titulo.of("Pagar aluguel"),
                 descricao = Descricao.of("Vencimento do contrato residencial"),
                 categoria =

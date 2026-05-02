@@ -41,6 +41,7 @@ class CriarTarefaUseCaseTest {
         val created =
             useCase.execute(
                 CriarTarefaCommand(
+                    ownerId = ownerId.value,
                     titulo = "  Lavar roupa  ",
                     descricao = " Separar roupas claras ",
                     categoriaId = categoryId.value,
@@ -49,6 +50,7 @@ class CriarTarefaUseCaseTest {
             )
 
         created.id shouldBe taskId
+        created.ownerId shouldBe ownerId
         created.titulo shouldBe Titulo.of("Lavar roupa")
         created.descricao shouldBe Descricao.of("Separar roupas claras")
         created.categoria shouldBe categoria
@@ -66,6 +68,7 @@ class CriarTarefaUseCaseTest {
         assertThrows<CategoriaNaoEncontradaException> {
             useCase.execute(
                 CriarTarefaCommand(
+                    ownerId = ownerId.value,
                     titulo = "Lavar roupa",
                     descricao = null,
                     categoriaId = categoryId.value,
@@ -85,6 +88,7 @@ class CriarTarefaUseCaseTest {
         assertThrows<InvalidDomainValueException> {
             useCase.execute(
                 CriarTarefaCommand(
+                    ownerId = ownerId.value,
                     titulo = "Lavar roupa",
                     descricao = null,
                     categoriaId = nilUuid,
