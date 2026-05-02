@@ -6,11 +6,168 @@
 <meta name="robots" content="noindex,nofollow">
 <title>EGSYS Tasks API · Playground</title>
 <link rel="icon" href="/egsys-logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/playground/assets/styles.css">
 </head>
 <body>
-<main>
-  <h1>Playground (em construcao)</h1>
-  <p>Pagina dev-only sera preenchida na proxima onda.</p>
+<div class="aurora"><span class="blob"></span></div>
+<div class="grid-overlay"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="/egsys-logo.svg" alt="EGSYS" class="brand-logo">
+    <div>
+      <div class="brand-title">Tasks API · Playground</div>
+      <div class="brand-sub">profile <code>dev</code> · pagina nao existe em <code>prod</code></div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="auth-badge" class="badge badge-muted">sem token</span>
+    <button id="reset-btn" class="btn btn-ghost" type="button">Reset</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="left">
+    <div class="card auth-card">
+      <header class="card-header">
+        <h2>Autenticacao</h2>
+        <span id="countdown" class="hint">access expira em --:--</span>
+      </header>
+      <div id="auth-body" class="auth-body">
+        <form id="register-form" class="auth-form">
+          <h3>Registrar</h3>
+          <label>Email <input name="email" type="email" autocomplete="off" required></label>
+          <label>Senha (min. 12) <input name="password" type="password" autocomplete="off" minlength="12" required></label>
+          <button class="btn btn-primary" type="submit">Registrar</button>
+        </form>
+        <form id="login-form" class="auth-form">
+          <h3>Login</h3>
+          <label>Email <input name="email" type="email" autocomplete="off" required></label>
+          <label>Senha <input name="password" type="password" autocomplete="off" required></label>
+          <button class="btn btn-primary" type="submit">Entrar</button>
+        </form>
+        <div class="auth-actions">
+          <button id="refresh-btn" class="btn btn-ghost" type="button" disabled>Refresh</button>
+          <button id="logout-btn" class="btn btn-ghost" type="button" disabled>Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-tab="tarefas" aria-selected="true">Tarefas</button>
+      <button class="tab" data-tab="categorias">Categorias</button>
+      <button class="tab" data-tab="auditoria">Auditoria</button>
+      <button class="tab" data-tab="metricas">Metricas</button>
+    </nav>
+
+    <section id="tab-tarefas" class="tab-panel">
+      <div class="card">
+        <header class="card-header">
+          <h2>Tarefas</h2>
+          <span class="hint">CRUD completo via JWT</span>
+        </header>
+        <form id="tarefa-form" class="grid-form">
+          <label>Titulo <input name="titulo" maxlength="200" required></label>
+          <label>Categoria
+            <select name="categoriaId" required><option value="">--</option></select>
+          </label>
+          <label>Data e hora <input name="dataHora" type="datetime-local" required></label>
+          <label class="full">Descricao <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
+          <button class="btn btn-primary" type="submit">Criar tarefa</button>
+        </form>
+        <div id="tarefa-list" class="task-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="tab-categorias" class="tab-panel" hidden>
+      <div class="card">
+        <header class="card-header">
+          <h2>Categorias</h2>
+          <span class="hint">somente leitura nesta versao</span>
+        </header>
+        <div id="categoria-list" class="task-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="tab-auditoria" class="tab-panel" hidden>
+      <div class="card">
+        <header class="card-header">
+          <h2>Auditoria da sessao</h2>
+          <span class="hint">cada chamada feita por esta pagina</span>
+        </header>
+        <div id="audit-list" class="audit-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-metricas" class="tab-panel" hidden>
+      <div class="card">
+        <header class="card-header">
+          <h2>Metricas ao vivo</h2>
+          <span class="hint">polling a cada 5s em /actuator/prometheus</span>
+        </header>
+        <div id="metrics-grid" class="metrics-grid">
+          <div class="metric"><span class="metric-label">RPS</span><span class="metric-value" id="m-rps">--</span></div>
+          <div class="metric"><span class="metric-label">P95 (ms)</span><span class="metric-value" id="m-p95">--</span></div>
+          <div class="metric"><span class="metric-label">4xx total</span><span class="metric-value" id="m-4xx">--</span></div>
+          <div class="metric"><span class="metric-label">5xx total</span><span class="metric-value" id="m-5xx">--</span></div>
+        </div>
+        <p class="hint" id="metrics-hint">faca login com um usuario que tenha role <code>ADMIN</code> para ver dados.</p>
+      </div>
+    </section>
+  </section>
+
+  <aside class="right">
+    <div class="card req-card">
+      <header class="card-header">
+        <h2>Ultima requisicao</h2>
+        <div class="req-actions">
+          <button id="copy-curl" class="btn btn-ghost" type="button" disabled>Copiar curl</button>
+          <button id="repeat-req" class="btn btn-ghost" type="button" disabled>Repetir</button>
+        </div>
+      </header>
+      <div id="req-method" class="req-line"><span class="badge badge-muted">--</span> <span id="req-url">aguardando...</span></div>
+      <details open>
+        <summary>headers</summary>
+        <pre id="req-headers" class="code">--</pre>
+      </details>
+      <details>
+        <summary>body</summary>
+        <pre id="req-body" class="code">--</pre>
+      </details>
+    </div>
+    <div class="card req-card">
+      <header class="card-header">
+        <h2>Resposta</h2>
+        <span id="res-meta" class="hint">--</span>
+      </header>
+      <pre id="res-body" class="code">--</pre>
+    </div>
+  </aside>
 </main>
+
+<footer class="defense-bar" aria-live="polite">
+  <span class="pill" id="pill-rate">rate limit: --</span>
+  <span class="pill" id="pill-jwt">jwt: --</span>
+  <span class="pill" id="pill-defense">ultima defesa acionada: nenhuma</span>
+</footer>
+
+<div id="toast-host" class="toast-host" aria-live="assertive"></div>
+
+<dialog id="edit-dialog">
+  <form id="edit-form" method="dialog" class="grid-form">
+    <h3>Editar tarefa</h3>
+    <input type="hidden" name="id">
+    <label>Titulo <input name="titulo" required maxlength="200"></label>
+    <label>Categoria <select name="categoriaId" required></select></label>
+    <label>Data e hora <input name="dataHora" type="datetime-local" required></label>
+    <label class="full">Descricao <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
+    <div class="dialog-actions">
+      <button class="btn btn-ghost" value="cancel" formmethod="dialog">Cancelar</button>
+      <button class="btn btn-primary" id="edit-save" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/playground/assets/app.js" defer></script>
 </body>
 </html>
