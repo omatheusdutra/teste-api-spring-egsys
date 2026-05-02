@@ -22,3 +22,7 @@ spring:
 logging:
   level:
     br.com.egsys.tasks: DEBUG
+
+management:
+  tracing:
+    enabled: false

@@ -20,6 +20,7 @@ class BootstrapStructureTest {
                 "infrastructure/security",
                 "infrastructure/messaging",
                 "infrastructure/config",
+                "infrastructure/observability",
                 "web/controller",
                 "web/dto",
                 "web/mapper",

@@ -109,6 +109,14 @@ class AuthorizationAndHeadersTests {
             .andExpect(jsonPath("$.title").value("Limite de requisicoes excedido"))
     }
 
+    @Test
+    fun `prometheus exige autenticacao`() {
+        mockMvc
+            .perform(get("/actuator/prometheus"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.title").value("Nao autenticado"))
+    }
+
     private fun authenticated(role: UserRole): AuthenticatedJwt {
         val principal =
             AuthenticatedPrincipal(

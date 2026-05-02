@@ -4,8 +4,9 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1, 2, 3, 4 e 5 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
-API REST v1 e seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao e rate limiting.
+Etapas 0, 1, 2, 3, 4, 5 e 6 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
+API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
+logs JSON, correlation ID, Prometheus autenticado, tracing OTLP e health checks customizados.
 
 ## Stack Base
 
@@ -15,6 +16,7 @@ API REST v1 e seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao e ra
 - Spring Security, JJWT, Bouncy Castle
 - JUnit 5, Kotest assertions, MockK, Testcontainers, ArchUnit
 - ktlint, detekt, JaCoCo, Pitest
+- Micrometer, Prometheus, OpenTelemetry e logs JSON
 
 ## Como Testar
 
@@ -43,6 +45,8 @@ Endpoints implementados:
 - `GET /api/v1/tarefas?cursor={cursor}&limit={1..100}`
 - `PUT /api/v1/tarefas/{id}`
 - `DELETE /api/v1/tarefas/{id}`
+- `GET /actuator/health` (autenticado)
+- `GET /actuator/prometheus` (autenticado)
 
 Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
 cursor-based, evitando offset em colecoes grandes.
@@ -58,6 +62,16 @@ cursor-based, evitando offset em colecoes grandes.
 | Acesso USER a endpoint ADMIN | RBAC com `@PreAuthorize` | `AuthorizationAndHeadersTests` |
 | Brute force | rate limiting por IP/usuario com `Retry-After` | `AuthorizationAndHeadersTests` |
 | Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` |
+| Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` |
+| Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
+
+## Observabilidade
+
+- Logs JSON no console via `logback-spring.xml`, com `correlationId` e `userId` no MDC quando presentes.
+- `X-Correlation-Id` e propagado em toda resposta; valores invalidos sao descartados.
+- Metricas Prometheus disponiveis em `/actuator/prometheus`, protegidas por JWT.
+- Traces saem via OTLP em `OTEL_EXPORTER_OTLP_ENDPOINT` com sampling configuravel por `EGSYS_TRACING_SAMPLE_PROBABILITY`.
+- Health checks customizados validam PostgreSQL (`SELECT 1`) e Redis (`PING`).
 
 ## Arquitetura
 
@@ -91,3 +105,4 @@ Rel(infra, redis, "RESP")
 | [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistencia PostgreSQL, Flyway e JPA |
 | [0003](docs/adr/0003-api-rest-problemdetail-cursor.md) | API REST com ProblemDetail e cursor pagination |
 | [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Seguranca JWT RS256, RBAC e anti-IDOR |
+| [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |

@@ -29,3 +29,15 @@ logging:
   level:
     root: INFO
     br.com.egsys.tasks: INFO
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: ADMIN
+  tracing:
+    sampling:
+      probability: ${EGSYS_TRACING_SAMPLE_PROBABILITY:0.1}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
