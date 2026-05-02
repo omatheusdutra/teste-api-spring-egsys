@@ -62,6 +62,28 @@ class ValueObjectsTest {
     }
 
     @Test
+    fun `text value objects reject control characters that postgres cannot persist`() {
+        // Regressao F-001 (pentest interno 2026-05-02 cenario 23): NUL byte chegava ao Postgres
+        // e causava 500 (Postgres rejeita \u0000 em colunas TEXT). Defesa: bloquear no dominio.
+        val nulString = "abc\u0000def"
+
+        assertThrows<InvalidDomainValueException> { Titulo.of(nulString) }
+            .shouldHaveMessage("titulo nao pode conter caracteres de controle")
+        assertThrows<InvalidDomainValueException> { Descricao.of(nulString) }
+            .shouldHaveMessage("descricao nao pode conter caracteres de controle")
+        assertThrows<InvalidDomainValueException> { DescricaoCategoria.of(nulString) }
+            .shouldHaveMessage("categoria.descricao nao pode conter caracteres de controle")
+
+        // Outros control chars do bloco C0 (exceto whitespace permitido em descricao multiline)
+        assertThrows<InvalidDomainValueException> { Titulo.of("abc\u0007") }
+        assertThrows<InvalidDomainValueException> { Titulo.of("a\nb") }
+        assertThrows<InvalidDomainValueException> { DescricaoCategoria.of("a\tb") }
+
+        // Descricao tolera quebra de linha real para textos multiline.
+        Descricao.of("primeira linha\nsegunda linha")?.value shouldBe "primeira linha\nsegunda linha"
+    }
+
+    @Test
     fun `categoria descricao is required trimmed and size limited`() {
         DescricaoCategoria.of("  Casa  ").value shouldBe "Casa"
         DescricaoCategoria.of("a".repeat(120)).value.shouldHaveLength(120)
