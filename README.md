@@ -7,7 +7,8 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 Etapas 0, 1, 2, 3, 4, 5, 6 e 7 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
 logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
-Outbox, historico auditavel e CSV.
+Outbox, historico auditavel e CSV. Etapa 8 adiciona Dockerfile distroless, docker-compose, Makefile, Bruno collection e
+workflows de CI/seguranca.
 
 ## Stack Base
 
@@ -28,6 +29,33 @@ tag `postgres` e excluida automaticamente do `test` local.
 ./gradlew check
 ./gradlew pitest
 ```
+
+## Como Executar
+
+Subir dependencias e API em containers:
+
+```bash
+docker compose up -d --build
+```
+
+Rodar a API local usando Postgres/Redis do compose:
+
+```bash
+docker compose up -d postgres redis
+./gradlew bootRun
+```
+
+Comandos curtos tambem estao no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
+
+Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e substitua o placeholder de
+`config/prometheus/secrets/api-token.example` no formato `Bearer <token>` no seu ambiente local.
+
+## Tour de 30s
+
+1. Abra a colecao Bruno `bruno/egsys-tasks-api`.
+2. Execute `01 Register`, depois `02 Login`.
+3. Copie `accessToken` da resposta de login para o ambiente `local`.
+4. Execute `03 Create Task` e `04 List Tasks`.
 
 ## API REST v1
 
@@ -124,3 +152,14 @@ Rel(infra, redis, "RESP")
 | [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Seguranca JWT RS256, RBAC e anti-IDOR |
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
 | [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |
+| [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
+
+## Roadmap Futuro
+
+| Item | Motivo |
+| --- | --- |
+| Worker de Outbox | publicar notificacoes/email/WebSocket com retry e idempotencia |
+| Importacao CSV/iCal | fechar ciclo de interoperabilidade de tarefas |
+| Dashboards Grafana versionados | entregar paineis prontos alem do datasource |
+| Push de imagem GHCR | publicar imagem assinada em tags `v*` |
+| OWASP Dependency-Check com NVD API key | tornar SCA menos sujeito a rate limit externo |

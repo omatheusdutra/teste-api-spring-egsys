@@ -1,0 +1,15 @@
+meta {
+  name: 04 List Tasks
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tarefas
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

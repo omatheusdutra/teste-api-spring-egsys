@@ -30,3 +30,16 @@ jobs:
 
       - name: Check
         run: ./gradlew check --stacktrace
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: check
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build image
+        run: docker build -t teste-api-spring-egsys:${{ github.sha }} .

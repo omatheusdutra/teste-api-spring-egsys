@@ -1,0 +1,9 @@
+.git
+.gradle
+.kotlin
+build
+out
+*.iml
+.idea
+docs
+bruno

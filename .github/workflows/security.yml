@@ -1,0 +1,74 @@
+name: Security
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main", "master"]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: p/ci
+
+  trivy:
+    name: Trivy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Filesystem scan
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
