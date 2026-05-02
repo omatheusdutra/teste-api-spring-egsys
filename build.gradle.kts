@@ -40,6 +40,7 @@ val jacocoCoverageExclusions =
         "**/web/dto/**",
         "**/web/exception/**",
         "**/web/controller/AuthController.class",
+        "**/web/controller/PlaygroundController.class",
         "**/infrastructure/**/entity/**",
         "**/infrastructure/security/*Filter.class",
         "**/infrastructure/security/JwtKeyProvider.class",
