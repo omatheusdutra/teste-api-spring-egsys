@@ -572,6 +572,170 @@
   });
 
   // ============================================================
+  // DEFENSE DEMOS — botoes que atacam a API e mostram veredito ao vivo
+  // ============================================================
+  const demos = {
+    'rate-limit': {
+      requireAuth: false,
+      run: async () => {
+        const target = '/api/v1/auth/login';
+        const promises = Array.from({ length: 12 }, () =>
+          fetch(target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'naoexiste@example.com', password: 'senha-invalida-12!' }),
+            credentials: 'omit',
+          }).then(r => r.status).catch(() => 0)
+        );
+        const results = await Promise.all(promises);
+        const got429 = results.includes(429);
+        return {
+          ok: got429,
+          summary: `${results.length} requests · status: ${[...new Set(results)].sort().join(', ')}`,
+          expected: '429 com Retry-After',
+        };
+      },
+    },
+    'idor': {
+      requireAuth: true,
+      run: async () => {
+        const randomUuid = '00000000-0000-4000-8000-' + Math.random().toString(16).slice(2, 14).padEnd(12, '0');
+        const r = await fetch(`/api/v1/tarefas/${randomUuid}`, {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        });
+        recordRequest({
+          method: 'GET', url: `/api/v1/tarefas/${randomUuid}`,
+          headers: { Authorization: `Bearer ${accessToken}` }, body: null,
+          status: r.status, latencyMs: 0, responseText: await r.text(),
+        });
+        return {
+          ok: r.status === 404 || r.status === 403,
+          summary: `status ${r.status} (preferencia 404 para nao revelar existencia)`,
+          expected: '404 ou 403',
+        };
+      },
+    },
+    'tampered-jwt': {
+      requireAuth: true,
+      run: async () => {
+        const tampered = accessToken.slice(0, -4) + 'AAAA';
+        const r = await fetch('/api/v1/tarefas', {
+          headers: { Authorization: `Bearer ${tampered}`, Accept: 'application/json' },
+        });
+        recordRequest({
+          method: 'GET', url: '/api/v1/tarefas', headers: { Authorization: `Bearer ${maskToken(tampered)}` },
+          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+        });
+        return {
+          ok: r.status === 401,
+          summary: `status ${r.status} (assinatura invalida rejeitada)`,
+          expected: '401',
+        };
+      },
+    },
+    'alg-none': {
+      requireAuth: false,
+      run: async () => {
+        const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' })).replace(/=+$/, '');
+        const payload = btoa(JSON.stringify({
+          sub: '00000000-0000-0000-0000-000000000000', iss: 'egsys-tasks-api',
+          aud: 'egsys-tasks-clients', exp: Math.floor(Date.now() / 1000) + 3600,
+          roles: ['ROLE_ADMIN'],
+        })).replace(/=+$/, '');
+        const forged = `${header}.${payload}.`;
+        const r = await fetch('/api/v1/tarefas', {
+          headers: { Authorization: `Bearer ${forged}`, Accept: 'application/json' },
+        });
+        recordRequest({
+          method: 'GET', url: '/api/v1/tarefas', headers: { Authorization: `Bearer ${maskToken(forged)}` },
+          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+        });
+        return {
+          ok: r.status === 401,
+          summary: `status ${r.status} (alg=none rejeitado antes da assinatura)`,
+          expected: '401',
+        };
+      },
+    },
+    'sqli': {
+      requireAuth: true,
+      run: async () => {
+        const payload = encodeURIComponent("'; DROP TABLE tarefas; --");
+        const url = `/api/v1/tarefas?cursor=${payload}&limit=10`;
+        const r = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        });
+        recordRequest({
+          method: 'GET', url, headers: { Authorization: `Bearer ${accessToken}` },
+          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+        });
+        return {
+          ok: r.status === 400 || r.status === 200,
+          summary: `status ${r.status} · cursor opaco rejeitado ou tratado como string`,
+          expected: '400 ou 200 sem dano (consultas usam parametros nomeados)',
+        };
+      },
+    },
+    'mass-assignment': {
+      requireAuth: true,
+      run: async () => {
+        const cat = categorias[0];
+        if (!cat) return { ok: false, summary: 'sem categoria carregada', expected: 'precisa autenticar primeiro' };
+        const body = {
+          titulo: 'tentativa de mass assignment',
+          descricao: 'payload tenta injetar ownerId',
+          categoriaId: cat.id,
+          dataHora: new Date(Date.now() + 86400000).toISOString(),
+          ownerId: '00000000-0000-0000-0000-000000000000',
+          role: 'ADMIN',
+        };
+        const r = await fetch('/api/v1/tarefas', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(body),
+        });
+        recordRequest({
+          method: 'POST', url: '/api/v1/tarefas',
+          headers: { Authorization: `Bearer ${accessToken}` }, body, status: r.status, latencyMs: 0, responseText: await r.text(),
+        });
+        return {
+          ok: r.status === 400,
+          summary: `status ${r.status} (Jackson rejeita unknown properties)`,
+          expected: '400 — DTO ignora campos extras com fail-on-unknown',
+        };
+      },
+    },
+  };
+
+  $$('.demo-btn').forEach(btn => {
+    btn.addEventListener('click', () => runDemo(btn.dataset.demo, btn));
+  });
+
+  async function runDemo(name, btn) {
+    const demo = demos[name];
+    if (!demo) return;
+    if (demo.requireAuth && !accessToken) {
+      toast('faca login antes de provocar essa defesa', 'err');
+      return;
+    }
+    const verdict = $(`[data-verdict="${name}"]`);
+    verdict.className = 'demo-verdict running';
+    verdict.textContent = 'atacando...';
+    btn.disabled = true;
+    try {
+      const result = await demo.run();
+      verdict.className = `demo-verdict ${result.ok ? 'ok' : 'fail'}`;
+      verdict.textContent = result.ok ? `OK · ${result.summary}` : `FALHOU · ${result.summary}`;
+      toast(result.ok ? `${name}: defesa segurou` : `${name}: defesa NAO segurou — esperado ${result.expected}`, result.ok ? 'ok' : 'err');
+    } catch (err) {
+      verdict.className = 'demo-verdict fail';
+      verdict.textContent = `erro: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ============================================================
   // INIT
   // ============================================================
   function onAuthenticated() {

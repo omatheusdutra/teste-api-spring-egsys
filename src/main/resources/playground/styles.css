@@ -175,6 +175,30 @@ code, pre { font-family: var(--font-mono); }
 .grid-form .full { grid-column: 1 / -1; }
 .grid-form button { grid-column: 1 / -1; }
 
+.defense-demos { border-color: rgba(34, 211, 238, 0.18); }
+.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 720px) { .demo-grid { grid-template-columns: 1fr 1fr; } }
+.demo-btn {
+  display: grid; gap: 4px; padding: 12px;
+  background: rgba(0, 0, 0, 0.18); border: 1px solid var(--border); border-radius: 10px;
+  cursor: pointer; color: var(--text-1); font: inherit; text-align: left;
+  transition: all 0.15s ease;
+}
+.demo-btn:hover:not(:disabled) { border-color: var(--cyan); background: rgba(34, 211, 238, 0.05); }
+.demo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.demo-icon { font-size: 18px; }
+.demo-title { font-weight: 600; font-size: 13px; }
+.demo-desc { color: var(--text-3); font-size: 11px; }
+.demo-verdict {
+  display: inline-block; margin-top: 6px;
+  padding: 3px 8px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 11px;
+  border: 1px dashed var(--border); color: var(--text-3); width: fit-content;
+}
+.demo-verdict.ok { color: var(--green); border-color: rgba(16, 224, 152, 0.5); border-style: solid; background: rgba(16, 224, 152, 0.08); }
+.demo-verdict.fail { color: var(--red); border-color: rgba(248, 113, 113, 0.5); border-style: solid; background: rgba(248, 113, 113, 0.08); }
+.demo-verdict.running { color: var(--yellow); border-color: rgba(251, 191, 36, 0.5); border-style: solid; background: rgba(251, 191, 36, 0.08); }
+
 .task-list { display: grid; gap: 10px; }
 .task-row {
   display: grid; grid-template-columns: 1fr auto; gap: 8px 14px;

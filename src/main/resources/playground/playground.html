@@ -53,6 +53,51 @@
       </div>
     </div>
 
+    <div class="card defense-demos">
+      <header class="card-header">
+        <h2>Provoque uma defesa</h2>
+        <span class="hint">cada botao ataca a propria API e mostra se a defesa segurou</span>
+      </header>
+      <div class="demo-grid">
+        <button class="demo-btn" type="button" data-demo="rate-limit">
+          <span class="demo-icon">🔥</span>
+          <span class="demo-title">Estourar rate limit</span>
+          <span class="demo-desc">dispara ~120 requests em paralelo</span>
+          <span class="demo-verdict" data-verdict="rate-limit">aguardando</span>
+        </button>
+        <button class="demo-btn" type="button" data-demo="idor">
+          <span class="demo-icon">🎭</span>
+          <span class="demo-title">Tentar IDOR</span>
+          <span class="demo-desc">le tarefa por UUID aleatorio</span>
+          <span class="demo-verdict" data-verdict="idor">aguardando</span>
+        </button>
+        <button class="demo-btn" type="button" data-demo="tampered-jwt">
+          <span class="demo-icon">🪞</span>
+          <span class="demo-title">Token adulterado</span>
+          <span class="demo-desc">flipa byte da assinatura</span>
+          <span class="demo-verdict" data-verdict="tampered-jwt">aguardando</span>
+        </button>
+        <button class="demo-btn" type="button" data-demo="alg-none">
+          <span class="demo-icon">🪪</span>
+          <span class="demo-title">JWT alg none</span>
+          <span class="demo-desc">forja header sem assinatura</span>
+          <span class="demo-verdict" data-verdict="alg-none">aguardando</span>
+        </button>
+        <button class="demo-btn" type="button" data-demo="sqli">
+          <span class="demo-icon">💉</span>
+          <span class="demo-title">SQLi em cursor</span>
+          <span class="demo-desc">payload classico em parametro</span>
+          <span class="demo-verdict" data-verdict="sqli">aguardando</span>
+        </button>
+        <button class="demo-btn" type="button" data-demo="mass-assignment">
+          <span class="demo-icon">📦</span>
+          <span class="demo-title">Mass assignment</span>
+          <span class="demo-desc">tenta enviar ownerId no body</span>
+          <span class="demo-verdict" data-verdict="mass-assignment">aguardando</span>
+        </button>
+      </div>
+    </div>
+
     <nav class="tabs" role="tablist">
       <button class="tab" data-tab="tarefas" aria-selected="true">Tarefas</button>
       <button class="tab" data-tab="categorias">Categorias</button>

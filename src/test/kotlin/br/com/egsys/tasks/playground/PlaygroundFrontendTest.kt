@@ -83,4 +83,11 @@ class PlaygroundFrontendTest {
         // acessibilidade basica: leitores de tela precisam ser avisados.
         html.contains("aria-live").shouldBeTrue()
     }
+
+    @Test
+    fun `painel de demonstracoes de defesa expoe os 6 cenarios prometidos`() {
+        val demos = listOf("rate-limit", "idor", "tampered-jwt", "alg-none", "sqli", "mass-assignment")
+        demos.forEach { html.shouldContain("data-demo=\"$it\"") }
+        demos.forEach { js.shouldContain("'$it'") }
+    }
 }
