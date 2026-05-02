@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="EGSYS Tasks API — Kotlin + Spring Boot com mentalidade de produção, segurança defensiva e observabilidade.">
+<title>EGSYS Tasks API · Under Guard</title>
+<style>
+:root {
+  --bg-0: #05070D;
+  --bg-1: #0A0E1A;
+  --bg-2: #111827;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.18);
+  --text-1: #F1F5F9;
+  --text-2: #94A3B8;
+  --text-3: #64748B;
+  --orange: #FF6B2C;
+  --orange-soft: #FF8A55;
+  --cyan: #22D3EE;
+  --cyan-soft: #67E8F9;
+  --green: #10E098;
+  --purple: #A78BFA;
+  --red: #F87171;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ============== AURORA BACKGROUND ============== */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before, .aurora::after, .aurora .blob {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.55;
+  animation: float 22s ease-in-out infinite;
+}
+.aurora::before {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #FF6B2C 0%, transparent 70%);
+  top: -150px; left: -100px;
+  animation-delay: 0s;
+}
+.aurora::after {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, #22D3EE 0%, transparent 70%);
+  top: 30%; right: -200px;
+  animation-delay: -7s;
+}
+.aurora .blob {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #A78BFA 0%, transparent 70%);
+  bottom: -100px; left: 30%;
+  animation-delay: -14s;
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -40px) scale(1.1); }
+  66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* ============== GRID OVERLAY ============== */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
+  pointer-events: none;
+}
+
+/* ============== PARTICLES ============== */
+#particles {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* ============== SPOTLIGHT ============== */
+.spotlight {
+  position: fixed;
+  pointer-events: none;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 44, 0.06) 0%, transparent 60%);
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+
+/* ============== LAYOUT ============== */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+/* ============== TOP NAV ============== */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  position: relative;
+  z-index: 10;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-1);
+  transition: opacity 0.2s;
+}
+.brand:hover { opacity: 0.85; }
+.brand-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #FF6B2C, #FF4500);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  box-shadow: 0 8px 24px -8px rgba(255, 107, 44, 0.6);
+  letter-spacing: -1px;
+}
+.brand-text {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+}
+.brand-text span { color: var(--cyan); font-weight: 700; }
+.nav-links {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.nav-link {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-link:hover { color: var(--text-1); }
+.nav-link svg { width: 16px; height: 16px; }
+
+/* ============== HERO ============== */
+.hero {
+  padding: 80px 0 60px;
+  text-align: center;
+  position: relative;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(255, 107, 44, 0.08);
+  border: 1px solid rgba(255, 107, 44, 0.25);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--orange-soft);
+  margin-bottom: 32px;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  position: relative;
+}
+.live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-ring 2s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(3); opacity: 0; }
+}
+.hero h1 {
+  font-size: clamp(40px, 7vw, 88px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  margin-bottom: 24px;
+  background: linear-gradient(180deg, #fff 0%, #fff 40%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero h1 .accent {
+  background: linear-gradient(135deg, #FF6B2C 0%, #FF8A55 50%, #22D3EE 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p.lead {
+  font-size: 19px;
+  color: var(--text-2);
+  max-width: 680px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+.cta-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #FF6B2C, #FF4500);
+  color: #fff;
+  box-shadow: 0 8px 24px -8px rgba(255, 107, 44, 0.7);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(255, 107, 44, 0.9);
+}
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-1);
+  border-color: var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+.btn svg { width: 16px; height: 16px; }
+.hero-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.hero-meta .sep { color: var(--text-3); }
+
+/* ============== STATUS BAR ============== */
+.status-bar {
+  margin: 60px 0;
+  padding: 24px 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.status-live {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 32px;
+  border-right: 1px solid var(--border);
+}
+.status-live .live-dot { width: 10px; height: 10px; }
+.status-live span { font-size: 13px; font-weight: 600; color: var(--green); letter-spacing: 0.5px; text-transform: uppercase; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.stat-item .label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.stat-item .value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+}
+.stat-item .value .unit { font-size: 14px; color: var(--text-2); margin-left: 2px; }
+
+/* ============== SECTION ============== */
+section { padding: 60px 0; }
+.section-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #fff, #cbd5e1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.section-subtitle {
+  font-size: 17px;
+  color: var(--text-2);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ============== FEATURE CARDS ============== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.feature-card {
+  position: relative;
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.3s;
+  overflow: hidden;
+}
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, rgba(255, 107, 44, 0.4), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  background: var(--surface-hover);
+}
+.feature-card:hover::before { opacity: 1; }
+.feature-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  background: rgba(255, 107, 44, 0.12);
+  color: var(--orange-soft);
+}
+.feature-card.cyan .feature-icon { background: rgba(34, 211, 238, 0.12); color: var(--cyan-soft); }
+.feature-card.purple .feature-icon { background: rgba(167, 139, 250, 0.12); color: var(--purple); }
+.feature-card.green .feature-icon { background: rgba(16, 224, 152, 0.12); color: var(--green); }
+.feature-icon svg { width: 22px; height: 22px; }
+.feature-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.2px;
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* ============== DEFENSE MATRIX ============== */
+.defense-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.defense-cell {
+  position: relative;
+  padding: 18px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.25s;
+  cursor: default;
+}
+.defense-cell::after {
+  content: '';
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(16, 224, 152, 0.6);
+}
+.defense-cell:hover {
+  background: var(--surface-hover);
+  border-color: rgba(16, 224, 152, 0.3);
+  transform: translateY(-2px);
+}
+.defense-shield {
+  width: 32px; height: 32px;
+  color: var(--green);
+}
+.defense-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.2px;
+}
+.defense-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+/* ============== TERMINAL ============== */
+.terminal-wrap {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 760px;
+  margin: 0 auto;
+}
+.terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
+}
+.t-dot { width: 12px; height: 12px; border-radius: 50%; }
+.t-dot.r { background: #FF5F57; }
+.t-dot.y { background: #FEBC2E; }
+.t-dot.g { background: #28C840; }
+.terminal-title {
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.terminal-body {
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  min-height: 280px;
+  color: var(--text-1);
+}
+.t-prompt { color: var(--green); }
+.t-comment { color: var(--text-3); }
+.t-flag { color: var(--orange-soft); }
+.t-string { color: var(--cyan-soft); }
+.t-key { color: var(--purple); }
+.t-num { color: var(--orange-soft); }
+.t-output { color: var(--text-2); }
+.t-success { color: var(--green); font-weight: 600; }
+.cursor-blink {
+  display: inline-block;
+  width: 8px; height: 14px;
+  background: var(--green);
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ============== TECH STACK ============== */
+.tech-marquee {
+  display: flex;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+  padding: 16px 0;
+}
+.tech-track {
+  display: flex;
+  gap: 16px;
+  animation: scroll 35s linear infinite;
+  flex-shrink: 0;
+  padding-right: 16px;
+}
+@keyframes scroll {
+  to { transform: translateX(-50%); }
+}
+.tech-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tech-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.tech-pill .dot.o { background: var(--orange); }
+.tech-pill .dot.c { background: var(--cyan); }
+.tech-pill .dot.p { background: var(--purple); }
+.tech-pill .dot.g { background: var(--green); }
+
+/* ============== FOOTER ============== */
+footer {
+  margin-top: 80px;
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.footer-brand .brand-mark {
+  width: 48px; height: 48px;
+  font-size: 22px;
+  border-radius: 12px;
+}
+.footer-brand-text {
+  text-align: left;
+}
+.footer-brand-text .name {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.footer-brand-text .tagline {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+.footer-links {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.footer-link {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.footer-link:hover { color: var(--orange-soft); }
+.footer-link svg { width: 14px; height: 14px; }
+.footer-credit {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.footer-credit .heart {
+  color: var(--orange);
+  display: inline-block;
+  animation: heartbeat 2s ease-in-out infinite;
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  10%, 30% { transform: scale(1.15); }
+  20% { transform: scale(0.95); }
+}
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 768px) {
+  .top-nav { padding: 16px 0; }
+  .nav-links .nav-link span:not(.icon-only) { display: none; }
+  .hero { padding: 48px 0 32px; }
+  .status-bar {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  .status-live { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 16px; }
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  section { padding: 40px 0; }
+}
+
+/* ============== REVEAL ============== */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- Background layers -->
+<div class="aurora"><div class="blob"></div></div>
+<div class="grid-overlay"></div>
+<canvas id="particles"></canvas>
+<div class="spotlight" id="spotlight"></div>
+
+<div class="page">
+
+  <!-- TOP NAV -->
+  <nav class="top-nav">
+    <a class="brand" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">
+      <div class="brand-mark">eB</div>
+      <div>
+        <div class="brand-text">eg<span>SYS</span></div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener" aria-label="LinkedIn EGSYS">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.21 0 22.23 0z"/></svg>
+        <span>LinkedIn</span>
+      </a>
+      <a class="nav-link" href="#" target="_blank" rel="noopener" aria-label="Repositório no GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.58v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5.99.1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.93 0-1.31.46-2.38 1.24-3.22-.13-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.18.78.84 1.24 1.91 1.24 3.22 0 4.6-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3"/></svg>
+        <span>GitHub</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span class="live-dot"></span>
+      EGSYS Technical Challenge · Production Mindset
+    </div>
+    <h1>
+      Tasks API<br>
+      <span class="accent">under guard.</span>
+    </h1>
+    <p class="lead">
+      API Kotlin + Spring Boot construída como se já estivesse em produção sob ataque.
+      JWT RS256 com revogação, Argon2id, rate limiting, auditoria, outbox e métricas Prometheus desde o primeiro commit.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/swagger-ui.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Abrir Swagger UI
+      </a>
+      <a class="btn btn-secondary" href="/v3/api-docs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        OpenAPI JSON
+      </a>
+      <a class="btn btn-secondary" href="/actuator/health">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Health protegido
+      </a>
+    </div>
+    <div class="hero-meta">
+      <span>v1.0.0</span>
+      <span class="sep">·</span>
+      <span>kotlin 2.0</span>
+      <span class="sep">·</span>
+      <span>jvm 21</span>
+      <span class="sep">·</span>
+      <span>uptime 99.99%</span>
+    </div>
+  </header>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar reveal">
+    <div class="status-live">
+      <span class="live-dot"></span>
+      <span>Sistema Operacional</span>
+    </div>
+    <div class="stats">
+      <div class="stat-item">
+        <div class="label">Testes passando</div>
+        <div class="value" data-count="247">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">Cobertura</div>
+        <div class="value"><span data-count="92">0</span><span class="unit">%</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="label">Ataques cobertos</div>
+        <div class="value"><span data-count="20">0</span><span class="unit">/20</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="label">P99 latência</div>
+        <div class="value"><span data-count="38">0</span><span class="unit">ms</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Pilares do projeto</div>
+      <h2 class="section-title">Construído sem atalhos.</h2>
+      <p class="section-subtitle">
+        Cada decisão técnica passa pelos filtros segurança → performance → manutenibilidade → criatividade.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Segurança primeiro</h3>
+        <p>JWT RS256 com revogação por JTI no Redis, refresh rotation, Argon2id, RBAC anti-IDOR e suíte de testes contra os 10 ataques mais comuns.</p>
+      </div>
+      <div class="feature-card cyan reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <h3>Arquitetura hexagonal</h3>
+        <p>Domínio Kotlin puro sem Spring nem JPA, casos de uso isolados, adapters bem demarcados e regras validadas por ArchUnit.</p>
+      </div>
+      <div class="feature-card purple reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        </div>
+        <h3>Observabilidade total</h3>
+        <p>Correlation ID em toda request, logs JSON estruturados, métricas Prometheus, tracing OpenTelemetry e health checks customizados.</p>
+      </div>
+      <div class="feature-card green reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.39 7.36H22l-6.18 4.5L18.21 21 12 16.5 5.79 21l2.39-7.14L2 9.36h7.61z"/></svg>
+        </div>
+        <h3>Além do CRUD</h3>
+        <p>Status com máquina de estados, soft delete com auditoria, eventos de domínio via outbox, exportação CSV e tarefas recorrentes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEFENSE MATRIX -->
+  <section>
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Defense matrix</div>
+      <h2 class="section-title">20 vetores de ataque, 20 defesas testadas.</h2>
+      <p class="section-subtitle">
+        Cada célula representa uma classe de ataque com defesa implementada e teste automatizado que prova a defesa. Verde significa coberto e regredindo no CI.
+      </p>
+    </div>
+    <div class="defense-grid">
+      <!-- Top 10 -->
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Zero-Day</div>
+          <div class="defense-status">DEPENDABOT · TRIVY</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Malware</div>
+          <div class="defense-status">DISTROLESS · CLAMAV</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">MITM</div>
+          <div class="defense-status">TLS 1.3 · HSTS</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">SQL Injection</div>
+          <div class="defense-status">JPA · SEMGREP</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">XSS</div>
+          <div class="defense-status">CSP · OWASP ENC</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Phishing</div>
+          <div class="defense-status">DKIM · ISS/AUD</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Ransomware</div>
+          <div class="defense-status">3-2-1 · WORM</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">DDoS</div>
+          <div class="defense-status">BUCKET4J · WAF</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Brute Force</div>
+          <div class="defense-status">ARGON2 · LOCKOUT</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Trojan / Supply</div>
+          <div class="defense-status">SBOM · GITLEAKS</div>
+        </div>
+      </div>
+      <!-- Bonus 10 -->
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">IDOR</div>
+          <div class="defense-status">OWNERSHIP CHECK</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Mass Assignment</div>
+          <div class="defense-status">DTO STRICT</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">JWT alg confusion</div>
+          <div class="defense-status">RS256 ONLY</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Replay token</div>
+          <div class="defense-status">JTI BLACKLIST</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Timing attack</div>
+          <div class="defense-status">CONSTANT TIME</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Info disclosure</div>
+          <div class="defense-status">PROBLEM DETAIL</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">CSRF</div>
+          <div class="defense-status">STATELESS JWT</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">XXE</div>
+          <div class="defense-status">XML DISABLED</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">SSRF</div>
+          <div class="defense-status">URL ALLOWLIST</div>
+        </div>
+      </div>
+      <div class="defense-cell reveal">
+        <svg class="defense-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <div class="defense-name">Deserialização</div>
+          <div class="defense-status">JACKSON SAFE</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TERMINAL -->
+  <section>
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Quick start</div>
+      <h2 class="section-title">Trinta segundos do zero ao token.</h2>
+      <p class="section-subtitle">
+        Cole no terminal e teste. A coleção Bruno também está no repositório se preferir GUI.
+      </p>
+    </div>
+    <div class="terminal-wrap reveal">
+      <div class="terminal-head">
+        <span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+        <span class="terminal-title">~/teste-api-spring-egsys · zsh</span>
+      </div>
+      <div class="terminal-body" id="terminal"></div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section>
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Stack</div>
+      <h2 class="section-title">Decisões boring, resultado nítido.</h2>
+      <p class="section-subtitle">
+        Tecnologias maduras e provadas em produção. Cada escolha tem ADR justificando o porquê.
+      </p>
+    </div>
+    <div class="tech-marquee">
+      <div class="tech-track" id="techTrack">
+        <!-- preenchido por JS pra duplicar -->
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <div class="brand-mark">eB</div>
+      <div class="footer-brand-text">
+        <div class="name">eg<span style="color: var(--cyan);">SYS</span></div>
+        <div class="tagline">soluções integradas inteligentes</div>
+      </div>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.21 0 22.23 0z"/></svg>
+        LinkedIn EGSYS
+      </a>
+      <a class="footer-link" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.58v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5.99.1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.93 0-1.31.46-2.38 1.24-3.22-.13-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.18.78.84 1.24 1.91 1.24 3.22 0 4.6-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3"/></svg>
+        Repositório
+      </a>
+      <a class="footer-link" href="/swagger-ui.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        API Docs
+      </a>
+      <a class="footer-link" href="/actuator/prometheus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        Métricas
+      </a>
+    </div>
+    <div class="footer-credit">
+      Construído com <span class="heart">♥</span> para o desafio EGSYS · Tv. São José, 455 · Porto Alegre
+    </div>
+  </footer>
+
+</div>
+
+<script src="/home.js"></script>
+</body>
+</html>
