@@ -11,6 +11,24 @@
 API RESTful de tarefas em Kotlin + Spring Boot, desenhada como backend production-ready para o teste tecnico da EGSYS:
 segura por padrao, observavel, testavel e pronta para rodar em containers.
 
+## 0. PRINCIPIO FUNDADOR - "NEVER TRUST THE CLIENT"
+
+**NUNCA CONFIE NO CLIENTE.** Cliente aqui significa qualquer consumidor da API: navegador, app mobile, script,
+Postman/Bruno/curl, outro microsservico interno, integracao B2B externa, bot, scanner ou atacante humano.
+
+Tudo que vier em um request - headers, body, query params, path variables, cookies, IDs, flags, roles, timestamps,
+ownership e totais calculados - e hostil ate prova em contrario. O servidor:
+
+- revalida todo input com Bean Validation e regras de negocio;
+- deriva o usuario autenticado a partir do JWT/Spring Security, nunca do body;
+- recheca ownership a cada operacao para evitar IDOR;
+- recalcula valores informados pelo cliente quando houver regra derivada;
+- nunca delega decisao de autorizacao ao chamador;
+- nunca acredita em campos como `isAdmin`, `userId`, `ownerId` ou `role` vindos do JSON.
+
+Consequencia pratica nesta API: controllers nao recebem `userId` em DTO. A identidade vem do `Authentication` do Spring
+Security via `SecurityContextHolder`, e os use cases recebem `ownerId` derivado do contexto autenticado.
+
 ## ✅ Estado Atual
 
 Etapas 0 a 8 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
@@ -117,6 +135,45 @@ cursor-based, evitando offset em colecoes grandes.
 | Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` |
 | Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` |
 | CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` |
+
+## Modelo de Ameacas
+
+```mermaid
+flowchart LR
+  C[Cliente hostil: browser, mobile, script, B2B, bot] -->|headers/body/query/path nao confiaveis| API[Spring Security + Controllers]
+  API -->|JWT RS256, iss/aud, JTI, RBAC| SEC[SecurityContext]
+  API -->|Bean Validation + DTO allow-list| VAL[Validacao de entrada]
+  API -->|ownerId derivado do Authentication| UC[Use cases]
+  UC -->|ownership em toda operacao| DB[(PostgreSQL)]
+  API -->|revogacao e rate limit| REDIS[(Redis)]
+```
+
+| Ataque | Vetor | Defesa | Arquivo de teste | Status |
+| --- | --- | --- | --- | --- |
+| Zero-day exploit | dependencia vulneravel | Trivy, Dependabot, SCA no CI, runtime hardening | `ZeroDayDefenseTests.kt` | Estrutura criada |
+| Malware | upload/dependencia/container comprometido | imagem distroless, sem shell, scan de container; upload futuro com ClamAV/Tika | `MalwareDefenseTests.kt` | Estrutura criada |
+| MITM | downgrade/tampering de trafego | HSTS, JWT RS256, validacao de issuer/audience | `MitmDefenseTests.kt` | Estrutura criada |
+| SQL Injection | query insegura | JPA parametrizado, sem concat SQL, Semgrep | `SqlInjectionTests.kt` | Estrutura criada |
+| XSS | payload refletido | JSON correto, nosniff, CSP, escape em saidas HTML/email futuras | `XssReflectionTests.kt` | Estrutura criada |
+| Phishing/enumeracao | API impersonada ou erro revelador | iss/aud rigorosos e mensagens genericas | `PhishingResistanceTests.kt` | Estrutura criada |
+| Ransomware | credencial/host comprometido | menor privilegio DB, backups/runbook futuro, container hardening | `RansomwareResilienceTests.kt` | Estrutura criada |
+| DDoS | inundacao de requests | rate limiting Redis, body limit, timeouts | `DdosDefenseTests.kt` | Estrutura criada |
+| Forca bruta | tentativas massivas de login | Argon2id, throttle, erro generico | `BruteForceTests.kt` | Estrutura criada |
+| Trojan/supply chain | dependencia/action maliciosa | gitleaks, CI scanners, imagem distroless, revisao de workflow | `SupplyChainTests.kt` | Estrutura criada |
+| IDOR | acesso a recurso de outro usuario | filtro por `owner_id` em use cases/repositorios | `IdorTests.kt` | Estrutura criada |
+| Mass assignment | `ownerId`, `role`, `isAdmin` no JSON | DTO allow-list + `ignoreUnknown=false` | `MassAssignmentTests.kt` | Implementado |
+| JWT alg confusion | `none` ou HS256 | aceitar somente RS256 antes de validar assinatura | `JwtAlgConfusionTests.kt` | Estrutura criada |
+| Replay de token | reutilizacao de JTI/refresh | blacklist Redis + refresh rotation | `JwtReplayTests.kt` | Estrutura criada |
+| Timing attack | diferenca user inexistente vs senha errada | comparacao/hash controlado e mensagens genericas | `TimingAttackTests.kt` | Estrutura criada |
+| Information disclosure | stack trace/header Server/secrets | ProblemDetail generico, stack trace desabilitado, logs sem token | `InfoLeakTests.kt` | Estrutura criada |
+| CSRF | auth por cookie futuro | API stateless JWT em header; cookie exigiria SameSite+CSRF token | `CsrfDocumentationTests.kt` | Estrutura criada |
+| XXE | XML parser inseguro | XML nao suportado nos endpoints JSON | `XxeTests.kt` | Estrutura criada |
+| SSRF | URL outbound controlada pelo cliente | sem chamadas outbound hoje; futura whitelist e bloqueio de IP interno | `SsrfTests.kt` | Estrutura criada |
+| Deserializacao insegura | polymorphic typing/ObjectInputStream | Jackson sem default typing e DTOs explicitos | `DeserializationTests.kt` | Estrutura criada |
+
+Nao coberto ainda de forma executavel: ClamAV/Tika para uploads, backup/restore automatizado, TLS handshake em ambiente
+real, WAF/CDN, SBOM CycloneDX e pin por SHA de todas as GitHub Actions. Esses itens ficam explicitamente no roadmap de
+seguranca para evitar falsa sensacao de "100% seguro".
 
 ## ✨ Inovacoes Entregues
 
