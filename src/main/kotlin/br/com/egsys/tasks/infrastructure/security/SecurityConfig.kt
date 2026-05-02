@@ -66,6 +66,7 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.GET, "/").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/index.html").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/home.js").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/egsys-logo.svg").permitAll()
                 // Public by design: account bootstrap and token rotation must be reachable before authentication.
                 it.requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()

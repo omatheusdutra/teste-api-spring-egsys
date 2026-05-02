@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="EGSYS Tasks API — Kotlin + Spring Boot com mentalidade de produção, segurança defensiva e observabilidade.">
 <title>EGSYS Tasks API · Under Guard</title>
+<link rel="icon" href="/egsys-logo.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="/egsys-logo.svg" type="image/svg+xml">
 <style>
 :root {
   --bg-0: #05070D;
@@ -160,6 +162,13 @@ body {
   color: #fff;
   box-shadow: 0 8px 24px -8px rgba(255, 107, 44, 0.6);
   letter-spacing: -1px;
+}
+.brand-mark-img {
+  width: 46px;
+  height: 38px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 10px 22px rgba(255, 107, 44, 0.28));
 }
 .brand-text {
   font-weight: 600;
@@ -612,6 +621,10 @@ footer {
   font-size: 22px;
   border-radius: 12px;
 }
+.footer-brand .brand-mark-img {
+  width: 62px;
+  height: 46px;
+}
 .footer-brand-text {
   text-align: left;
 }
@@ -700,7 +713,7 @@ footer {
   <!-- TOP NAV -->
   <nav class="top-nav">
     <a class="brand" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">
-      <div class="brand-mark">eB</div>
+      <img src="/egsys-logo.svg" alt="Grupo Bringel" class="brand-mark-img">
       <div>
         <div class="brand-text">eg<span>SYS</span></div>
       </div>
@@ -710,7 +723,7 @@ footer {
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.21 0 22.23 0z"/></svg>
         <span>LinkedIn</span>
       </a>
-      <a class="nav-link" href="#" target="_blank" rel="noopener" aria-label="Repositório no GitHub">
+      <a class="nav-link" href="https://github.com/omatheusdutra/teste-api-spring-egsys" target="_blank" rel="noopener" aria-label="Repositório no GitHub">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.58v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5.99.1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.93 0-1.31.46-2.38 1.24-3.22-.13-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.18.78.84 1.24 1.91 1.24 3.22 0 4.6-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3"/></svg>
         <span>GitHub</span>
       </a>
@@ -728,8 +741,8 @@ footer {
       <span class="accent">under guard.</span>
     </h1>
     <p class="lead">
-      API Kotlin + Spring Boot construída como se já estivesse em produção sob ataque.
-      JWT RS256 com revogação, Argon2id, rate limiting, auditoria, outbox e métricas Prometheus desde o primeiro commit.
+      Uma API de produtividade corporativa para transformar tarefas em fluxo operacional confiável:
+      segura por arquitetura, observável por padrão e pronta para escalar integrações reais desde o primeiro deploy.
     </p>
     <div class="cta-row">
       <a class="btn btn-primary" href="/swagger-ui.html">
@@ -1015,7 +1028,7 @@ footer {
   <!-- FOOTER -->
   <footer>
     <div class="footer-brand">
-      <div class="brand-mark">eB</div>
+      <img src="/egsys-logo.svg" alt="Grupo Bringel" class="brand-mark-img">
       <div class="footer-brand-text">
         <div class="name">eg<span style="color: var(--cyan);">SYS</span></div>
         <div class="tagline">soluções integradas inteligentes</div>
@@ -1026,7 +1039,7 @@ footer {
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.21 0 22.23 0z"/></svg>
         LinkedIn EGSYS
       </a>
-      <a class="footer-link" href="#" target="_blank" rel="noopener">
+      <a class="footer-link" href="https://github.com/omatheusdutra/teste-api-spring-egsys" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.58v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5.99.1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.93 0-1.31.46-2.38 1.24-3.22-.13-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.18.78.84 1.24 1.91 1.24 3.22 0 4.6-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3"/></svg>
         Repositório
       </a>

@@ -10,7 +10,11 @@ class StaticHomeAssetTest {
         val html = requireNotNull(javaClass.classLoader.getResource("static/index.html")).readText()
 
         html.contains("EGSYS Tasks API").shouldBeTrue()
+        html.contains("""<link rel="icon" href="/egsys-logo.svg" type="image/svg+xml">""").shouldBeTrue()
+        html.contains("""<img src="/egsys-logo.svg" alt="Grupo Bringel" class="brand-mark-img">""").shouldBeTrue()
+        html.contains("https://github.com/omatheusdutra/teste-api-spring-egsys").shouldBeTrue()
         html.contains("""<script src="/home.js"></script>""").shouldBeTrue()
+        html.contains("""<div class="brand-mark">eB</div>""").shouldBeFalse()
         html.contains("fonts.googleapis.com").shouldBeFalse()
         html.contains("<script>").shouldBeFalse()
         html.contains("NUNCA CONFIE NO CLIENTE").shouldBeFalse()

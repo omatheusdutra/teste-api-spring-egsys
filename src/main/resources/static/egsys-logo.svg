@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 92" role="img" aria-labelledby="title desc">
+  <title id="title">Grupo Bringel</title>
+  <desc id="desc">Marca em laranja do Grupo Bringel usada na home publica da EGSYS Tasks API.</desc>
+  <g fill="none" stroke="#ff6b2c" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M62 18H42c-16 0-28 11-28 26s12 26 28 26h20" />
+    <path d="M62 18h56c16 0 28 11 28 26s-12 26-28 26H62" />
+    <path d="M98 18H42c-16 0-28 11-28 26s12 26 28 26h56" transform="translate(0 4) scale(1 -1) translate(0 -88)" />
+    <path d="M98 18h20c16 0 28 11 28 26s-12 26-28 26H98" transform="translate(0 4) scale(1 -1) translate(0 -88)" />
+    <path d="M42 46h76" />
+  </g>
+</svg>
