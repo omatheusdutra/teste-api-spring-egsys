@@ -42,7 +42,7 @@ class SecurityConfig(
             .cors { it.configurationSource(corsConfigurationSource()) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .headers {
-                it.contentSecurityPolicy { csp -> csp.policyDirectives("default-src 'none'; frame-ancestors 'none'") }
+                it.contentSecurityPolicy { csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY) }
                 it.httpStrictTransportSecurity { hsts ->
                     hsts.includeSubDomains(true).preload(true).maxAgeInSeconds(31_536_000)
                 }
@@ -101,5 +101,18 @@ class SecurityConfig(
             response.outputStream,
             ProblemDetail.forStatusAndDetail(status, detail).apply { this.title = title },
         )
+    }
+
+    private companion object {
+        const val CONTENT_SECURITY_POLICY =
+            "default-src 'none'; " +
+                "script-src 'self'; " +
+                "style-src 'self' 'unsafe-inline'; " +
+                "img-src 'self' data:; " +
+                "font-src 'self' data:; " +
+                "connect-src 'self'; " +
+                "base-uri 'none'; " +
+                "form-action 'none'; " +
+                "frame-ancestors 'none'"
     }
 }

@@ -4,6 +4,7 @@ import br.com.egsys.tasks.application.usecase.ListarCategoriasUseCase
 import br.com.egsys.tasks.infrastructure.security.AuthService
 import br.com.egsys.tasks.infrastructure.security.AuthenticatedJwt
 import br.com.egsys.tasks.infrastructure.security.AuthenticatedPrincipal
+import br.com.egsys.tasks.infrastructure.security.InvalidTokenException
 import br.com.egsys.tasks.infrastructure.security.JwtCredentials
 import br.com.egsys.tasks.infrastructure.security.JwtService
 import br.com.egsys.tasks.infrastructure.security.RateLimitExceededException
@@ -16,6 +17,7 @@ import br.com.egsys.tasks.web.exception.ApiExceptionHandler
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.justRun
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,13 +63,27 @@ class AuthorizationAndHeadersTests {
         mockMvc
             .perform(get("/api/v1/categorias"))
             .andExpect(status().isUnauthorized)
-            .andExpect(header().string("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"))
+            .andExpect(header().string("Content-Security-Policy", containsString("default-src 'none'")))
+            .andExpect(header().string("Content-Security-Policy", containsString("script-src 'self'")))
+            .andExpect(header().string("Content-Security-Policy", containsString("frame-ancestors 'none'")))
             .andExpect(header().string("X-Content-Type-Options", "nosniff"))
             .andExpect(header().string("X-Frame-Options", "DENY"))
             .andExpect(header().string("Referrer-Policy", "no-referrer"))
             .andExpect(header().string("Permissions-Policy", "geolocation=(), microphone=(), camera=()"))
             .andExpect(header().string("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate"))
             .andExpect(jsonPath("$.title").value("Nao autenticado"))
+    }
+
+    @Test
+    fun `token invalido retorna 401 ProblemDetail sem vazar stack trace`() {
+        every { jwtService.authenticate("broken") } throws InvalidTokenException()
+
+        mockMvc
+            .perform(get("/api/v1/categorias").header(HttpHeaders.AUTHORIZATION, "Bearer broken"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(jsonPath("$.title").value("Nao autenticado"))
+            .andExpect(jsonPath("$.detail").value("Token ausente ou invalido"))
     }
 
     @Test
