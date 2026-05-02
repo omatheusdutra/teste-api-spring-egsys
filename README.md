@@ -13,11 +13,12 @@ segura por padrao, observavel, testavel e pronta para rodar em containers.
 
 ## ✅ Estado Atual
 
-Etapas 0 a 8 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
+Etapas 0 a 9 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
 logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
 Outbox, historico auditavel e CSV. A entrega inclui Dockerfile distroless, docker-compose, Makefile, Bruno collection e
-workflows de CI/seguranca.
+workflows de CI/seguranca. O projeto tambem inclui playground interativo dev-only e pentest defensivo reproduzivel
+com 49 cenarios.
 
 ## 🧱 Stack Base
 
@@ -37,6 +38,16 @@ tag `postgres` e excluida automaticamente do `test` local.
 ```bash
 ./gradlew check
 ./gradlew pitest
+```
+
+Pentest defensivo local:
+
+```bash
+rm -f tools/pentest/.results.tsv
+eval "$(bash tools/pentest/setup.sh)"
+bash tools/pentest/01-auth-idor.sh
+bash tools/pentest/02-input-sqli-xss.sh
+bash tools/pentest/03-rate-headers-playground.sh
 ```
 
 ## 🛡️ Gates de Qualidade
@@ -63,6 +74,13 @@ docker compose up -d postgres redis
 ./gradlew bootRun
 ```
 
+Rodar com playground interativo habilitado:
+
+```bash
+docker compose up -d postgres redis
+SPRING_PROFILES_ACTIVE=dev EGSYS_DB_PASSWORD=egsys_local_password ./gradlew bootRun
+```
+
 Comandos curtos tambem estao no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
 
 Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e substitua o placeholder de
@@ -70,10 +88,24 @@ Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e sub
 
 ## ⚡ Tour de 30s
 
-1. Abra a colecao Bruno `bruno/egsys-tasks-api`.
-2. Execute `01 Register`, depois `02 Login`.
-3. Copie `accessToken` da resposta de login para o ambiente `local`.
-4. Execute `03 Create Task` e `04 List Tasks`.
+1. Com o profile `dev`, abra `http://localhost:8080/playground`.
+2. Registre ou faca login pelo painel de auth.
+3. Crie uma tarefa, liste, altere status e abra o historico.
+4. Use "Provoque uma defesa" para ver rate limit, IDOR, JWT adulterado, SQLi e mass assignment sendo bloqueados.
+
+Alternativa via cliente HTTP: abra a colecao Bruno `bruno/egsys-tasks-api`, execute `01 Register`, `02 Login`,
+`03 Create Task` e `04 List Tasks`.
+
+## Playground Interativo
+
+O playground fica em `/playground` somente com `SPRING_PROFILES_ACTIVE=dev`. Ele nao mora em `static/`; e servido
+por `PlaygroundController` com `@Profile("dev")`, conforme [ADR 0008](docs/adr/0008-playground-dev-only.md).
+
+- Auth completo: registrar, login, refresh, logout e countdown do JWT.
+- CRUD/tour de tarefas: categorias, criacao, listagem, status, historico e CSV.
+- Painel Request/Response com copiar como `curl` e repetir request.
+- Demonstracoes defensivas: rate limit, IDOR, token adulterado/expirado, SQLi e mass assignment.
+- Hardening frontend: token apenas em memoria JS, sem `localStorage`, sem `sessionStorage`, sem `eval`, sem inline handlers.
 
 ## 📚 API REST v1
 
@@ -97,26 +129,36 @@ Endpoints implementados:
 - `DELETE /api/v1/tarefas/{id}`
 - `GET /actuator/health` (autenticado)
 - `GET /actuator/prometheus` (autenticado)
+- `GET /playground` (somente profile `dev`)
 
 Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
 cursor-based, evitando offset em colecoes grandes.
 
 ## 🧨 Superficie de Ataque
 
-| Vetor | Defesa implementada | Teste |
-| --- | --- | --- |
-| JWT `alg=none` / HS256 | rejeicao explicita de algoritmo diferente de RS256 antes da assinatura | `AuthenticationTests` |
-| Token expirado, adulterado, iss/aud errado ou JTI revogado | validacao rigorosa de claims + blacklist Redis por JTI | `AuthenticationTests` |
-| Refresh token reutilizado | rotacao a cada uso e revogacao da familia | `RefreshTokenReuseTests` |
-| IDOR em tarefas | `owner_id` no dominio, use cases e queries de repositorio | `TarefaJpaRepositoryIntegrationTest` |
-| Acesso USER a endpoint ADMIN | RBAC com `@PreAuthorize` | `AuthorizationAndHeadersTests` |
-| Brute force | rate limiting por IP/usuario com `Retry-After` | `AuthorizationAndHeadersTests` |
-| Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` |
-| Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` |
-| Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
-| Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` |
-| Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` |
-| CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` |
+Pentest interno reproduzivel em `tools/pentest/` confirmado em 2026-05-02. Relatorio:
+[docs/pentest/REPORT-2026-05-02.md](docs/pentest/REPORT-2026-05-02.md).
+
+| Vetor | Defesa implementada | Teste automatizado | Pentest interno |
+| --- | --- | --- | --- |
+| JWT `alg=none` / HS256 | rejeicao explicita de algoritmo diferente de RS256 antes da assinatura | `AuthenticationTests` | `01-auth-idor.sh` #5-6 PASS |
+| Token expirado, adulterado, iss/aud errado ou JTI revogado | validacao rigorosa de claims + blacklist Redis por JTI | `AuthenticationTests` | `01-auth-idor.sh` #3-10 PASS |
+| Refresh token reutilizado | rotacao a cada uso e revogacao da familia | `RefreshTokenReuseTests` | `01-auth-idor.sh` #11 PASS |
+| IDOR em tarefas | `owner_id` no dominio, use cases e queries de repositorio | `TarefaJpaRepositoryIntegrationTest` | `01-auth-idor.sh` #12-14 PASS |
+| Acesso USER a endpoint ADMIN | RBAC com `@PreAuthorize` | `AuthorizationAndHeadersTests` | `01-auth-idor.sh` #15-16 PASS |
+| Mass assignment | DTOs explicitos e `ignoreUnknown=false` | `MassAssignmentTests` | `02-input-sqli-xss.sh` #17-19 PASS |
+| Payload bombing / JSON malformado | limites de tamanho + Bean Validation + Jackson constraints | `InputValidationTests` | `02-input-sqli-xss.sh` #20-26 PASS |
+| SQL injection | JPA/JPQL parametrizado e cursor opaco | `SqlInjectionTests` | `02-input-sqli-xss.sh` #27-30 PASS |
+| XSS/reflection | JSON `Content-Type`, `nosniff` e playground com `textContent` | `XssReflectionTests`, `PlaygroundFrontendTest` | `02-input-sqli-xss.sh` #31-33 PASS |
+| Brute force | rate limiting por IP/usuario com `Retry-After` | `AuthorizationAndHeadersTests` | `03-rate-headers-playground.sh` #34-35 PASS |
+| Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` | `03-rate-headers-playground.sh` #38-41 PASS/INFO |
+| Stack trace/info leak | ProblemDetail sem stack trace e `Server` removido | `InfoLeakTests` | `03-rate-headers-playground.sh` #41-42 PASS |
+| Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` | coberto por teste |
+| Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` | `01-auth-idor.sh` #15 PASS |
+| Playground exposto em prod | controller com `@Profile("dev")`, HTML fora de `static/` | `PlaygroundProfileTests` | `03-rate-headers-playground.sh` #44-49 PASS |
+| Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` | coberto por teste |
+| Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` | coberto por teste |
+| CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` | coberto por teste |
 
 ## ✨ Inovacoes Entregues
 
@@ -171,6 +213,7 @@ Rel(infra, redis, "RESP")
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
 | [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |
 | [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
+| [0008](docs/adr/0008-playground-dev-only.md) | Playground interativo dev-only |
 
 ## 🗺️ Roadmap Futuro
 
