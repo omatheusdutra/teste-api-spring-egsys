@@ -37,7 +37,6 @@ class HomeControllerTest {
             .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
             .andExpect(content().string(containsString("EGSYS Tasks API")))
             .andExpect(content().string(containsString("/swagger-ui/index.html")))
-            .andExpect(content().string(containsString("NUNCA CONFIE NO CLIENTE")))
             .andExpect(content().string(containsString("JWT RS256")))
             .andExpect(header().string("Content-Security-Policy", containsString("default-src 'none'")))
     }

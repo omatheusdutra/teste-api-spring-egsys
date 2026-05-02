@@ -132,13 +132,6 @@ class HomeController {
                     convive com JWT RS256, Argon2id, rate limiting, auditoria,
                     outbox, logs JSON e métricas prontas para Prometheus.
                   </p>
-                  <p>
-                    <strong>NUNCA CONFIE NO CLIENTE.</strong> Navegador, app mobile,
-                    script, microsserviço, integração B2B, bot ou scanner: tudo que
-                    chega no request é tratado como hostil até o servidor provar o
-                    contrário. Validação, autorização, ownership e regras de negócio
-                    acontecem sempre aqui, nunca no chamador.
-                  </p>
                   <div class="actions">
                     <a class="button primary" href="/swagger-ui/index.html">Abrir Swagger UI</a>
                     <a class="button" href="/v3/api-docs">Ver OpenAPI JSON</a>
@@ -148,8 +141,7 @@ class HomeController {
                 <section class="grid" aria-label="Destaques da API">
                   <div class="card">
                     <strong>🔐 Segurança primeiro</strong>
-                    JWT RS256, refresh rotation, blacklist Redis, RBAC anti-IDOR e
-                    identidade derivada do Spring Security.
+                    JWT RS256, refresh rotation, blacklist Redis e RBAC anti-IDOR.
                   </div>
                   <div class="card">
                     <strong>🧭 Arquitetura limpa</strong>
