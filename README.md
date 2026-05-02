@@ -1,8 +1,17 @@
-# teste-api-spring-egsys
+# 🚀 EGSYS Tasks API
 
-API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
+[![CI](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/ci.yml)
+[![Security](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/security.yml)
+[![Release](https://img.shields.io/github/v/tag/omatheusdutra/teste-api-spring-egsys?label=release&sort=semver)](https://github.com/omatheusdutra/teste-api-spring-egsys/releases/tag/v1.0.0)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 
-## Estado Atual
+API RESTful de tarefas em Kotlin + Spring Boot, desenhada como backend production-ready para o teste tecnico da EGSYS:
+segura por padrao, observavel, testavel e pronta para rodar em containers.
+
+## ✅ Estado Atual
 
 Etapas 0 a 8 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
@@ -10,7 +19,7 @@ logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks c
 Outbox, historico auditavel e CSV. A entrega inclui Dockerfile distroless, docker-compose, Makefile, Bruno collection e
 workflows de CI/seguranca.
 
-## Stack Base
+## 🧱 Stack Base
 
 - Kotlin 2.x, JVM 21, Spring Boot 3.5.x
 - Gradle Kotlin DSL
@@ -20,7 +29,7 @@ workflows de CI/seguranca.
 - ktlint, detekt, JaCoCo, Pitest
 - Micrometer, Prometheus, OpenTelemetry e logs JSON
 
-## Como Testar
+## 🧪 Como Testar
 
 Pre-requisitos: JDK 21. Docker e necessario para executar os testes de persistencia com Testcontainers; sem Docker, a
 tag `postgres` e excluida automaticamente do `test` local.
@@ -30,7 +39,7 @@ tag `postgres` e excluida automaticamente do `test` local.
 ./gradlew pitest
 ```
 
-## Gates de Qualidade
+## 🛡️ Gates de Qualidade
 
 | Gate | Status local |
 | --- | --- |
@@ -39,7 +48,7 @@ tag `postgres` e excluida automaticamente do `test` local.
 | JaCoCo | Verde via `check`, minimo 85% linhas e 80% branches |
 | Trivy, Semgrep e gitleaks | Configurados no workflow `.github/workflows/security.yml` |
 
-## Como Executar
+## 🐳 Como Executar
 
 Subir dependencias e API em containers:
 
@@ -59,14 +68,14 @@ Comandos curtos tambem estao no `Makefile`: `make check`, `make pitest`, `make c
 Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e substitua o placeholder de
 `config/prometheus/secrets/api-token.example` no formato `Bearer <token>` no seu ambiente local.
 
-## Tour de 30s
+## ⚡ Tour de 30s
 
 1. Abra a colecao Bruno `bruno/egsys-tasks-api`.
 2. Execute `01 Register`, depois `02 Login`.
 3. Copie `accessToken` da resposta de login para o ambiente `local`.
 4. Execute `03 Create Task` e `04 List Tasks`.
 
-## API REST v1
+## 📚 API REST v1
 
 Swagger UI: `/swagger-ui.html`
 
@@ -92,7 +101,7 @@ Endpoints implementados:
 Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
 cursor-based, evitando offset em colecoes grandes.
 
-## Superficie de Ataque
+## 🧨 Superficie de Ataque
 
 | Vetor | Defesa implementada | Teste |
 | --- | --- | --- |
@@ -109,7 +118,7 @@ cursor-based, evitando offset em colecoes grandes.
 | Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` |
 | CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` |
 
-## Inovacoes Entregues
+## ✨ Inovacoes Entregues
 
 | Diferencial | Implementacao |
 | --- | --- |
@@ -119,7 +128,7 @@ cursor-based, evitando offset em colecoes grandes.
 | Historico de mudancas por tarefa | `tarefa_historico` consultavel por tarefa e usuario |
 | Exportacao CSV | `GET /api/v1/tarefas/export.csv` |
 
-## Observabilidade
+## 📈 Observabilidade
 
 - Logs JSON no console via `logback-spring.xml`, com `correlationId` e `userId` no MDC quando presentes.
 - `X-Correlation-Id` e propagado em toda resposta; valores invalidos sao descartados.
@@ -127,7 +136,7 @@ cursor-based, evitando offset em colecoes grandes.
 - Traces saem via OTLP em `OTEL_EXPORTER_OTLP_ENDPOINT` com sampling configuravel por `EGSYS_TRACING_SAMPLE_PROBABILITY`.
 - Health checks customizados validam PostgreSQL (`SELECT 1`) e Redis (`PING`).
 
-## Arquitetura
+## 🏗️ Arquitetura
 
 ```mermaid
 C4Container
@@ -151,7 +160,7 @@ Rel(infra, postgres, "JDBC")
 Rel(infra, redis, "RESP")
 ```
 
-## ADRs
+## 📝 ADRs
 
 | ADR | Decisao |
 | --- | --- |
@@ -163,7 +172,7 @@ Rel(infra, redis, "RESP")
 | [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |
 | [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
 
-## Roadmap Futuro
+## 🗺️ Roadmap Futuro
 
 | Item | Motivo |
 | --- | --- |
