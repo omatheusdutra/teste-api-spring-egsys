@@ -1,12 +1,15 @@
 package br.com.egsys.tasks.infrastructure.config
 
+import br.com.egsys.tasks.application.usecase.AlterarStatusTarefaUseCase
 import br.com.egsys.tasks.application.usecase.AtualizarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.BuscarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.CriarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ExcluirTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ListarCategoriasUseCase
+import br.com.egsys.tasks.application.usecase.ListarHistoricoTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ListarTarefasUseCase
 import br.com.egsys.tasks.domain.port.CategoriaRepository
+import br.com.egsys.tasks.domain.port.TarefaHistoricoRepository
 import br.com.egsys.tasks.domain.port.TarefaRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -45,4 +48,16 @@ class UseCaseConfig {
         tarefas: TarefaRepository,
         clock: Clock,
     ): ExcluirTarefaUseCase = ExcluirTarefaUseCase(tarefas, clock)
+
+    @Bean
+    fun alterarStatusTarefaUseCase(
+        tarefas: TarefaRepository,
+        clock: Clock,
+    ): AlterarStatusTarefaUseCase = AlterarStatusTarefaUseCase(tarefas, clock)
+
+    @Bean
+    fun listarHistoricoTarefaUseCase(
+        tarefas: TarefaRepository,
+        historico: TarefaHistoricoRepository,
+    ): ListarHistoricoTarefaUseCase = ListarHistoricoTarefaUseCase(tarefas, historico)
 }

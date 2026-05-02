@@ -18,6 +18,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.core.JdbcTemplate
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -35,6 +36,9 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
 
     @Autowired
     private lateinit var categorias: CategoriaRepository
+
+    @Autowired
+    private lateinit var jdbcTemplate: JdbcTemplate
 
     @Test
     fun `saves and restores task aggregate`() {
@@ -117,7 +121,39 @@ class TarefaJpaRepositoryIntegrationTest : PersistenceIntegrationTest() {
         tarefas.findByIdIncludingDeleted(tarefa.id, otherOwnerId).shouldBeNull()
     }
 
+    @Test
+    fun `persists domain events into outbox and task history`() {
+        val categoria = categoria("Casa")
+        val tarefa =
+            Tarefa.criar(
+                id = TarefaId.from(UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36946")),
+                ownerId = ownerId,
+                titulo = Titulo.of("Auditar criacao"),
+                descricao = Descricao.of("Criada com evento de dominio"),
+                categoria = categoria,
+                dataHora = DataHoraTarefa.agendadaPara(Instant.parse("2026-05-01T13:00:00Z"), clock),
+                clock = clock,
+            )
+
+        tarefas.save(tarefa)
+
+        countRows("outbox_events", "TarefaCriada", tarefa.id.value) shouldBe 1
+        countRows("tarefa_historico", "TarefaCriada", tarefa.id.value) shouldBe 1
+    }
+
     private fun categoria(descricao: String): Categoria = categorias.findAll().first { it.descricao.value == descricao }
+
+    private fun countRows(
+        table: String,
+        eventType: String,
+        tarefaId: UUID,
+    ): Int =
+        jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM $table WHERE event_type = ? AND tarefa_id = ?",
+            Int::class.java,
+            eventType,
+            tarefaId,
+        ) ?: 0
 
     private fun novaTarefa(
         id: String,

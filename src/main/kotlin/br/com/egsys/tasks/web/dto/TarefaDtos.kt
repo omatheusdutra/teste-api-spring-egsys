@@ -65,3 +65,12 @@ data class TarefaPageResponse(
     val items: List<TarefaResponse>,
     val nextCursor: String?,
 )
+
+@Schema(name = "TarefaHistoricoResponse")
+data class TarefaHistoricoResponse(
+    val id: UUID,
+    val tarefaId: UUID,
+    val eventType: String,
+    val changedFields: Set<String>,
+    val occurredAt: Instant,
+)

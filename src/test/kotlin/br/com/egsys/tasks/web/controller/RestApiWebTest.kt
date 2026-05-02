@@ -1,6 +1,8 @@
 package br.com.egsys.tasks.web.controller
 
 import br.com.egsys.tasks.application.exception.TarefaNaoEncontradaException
+import br.com.egsys.tasks.application.usecase.AlterarStatusTarefaCommand
+import br.com.egsys.tasks.application.usecase.AlterarStatusTarefaUseCase
 import br.com.egsys.tasks.application.usecase.AtualizarTarefaCommand
 import br.com.egsys.tasks.application.usecase.AtualizarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.BuscarTarefaUseCase
@@ -8,6 +10,7 @@ import br.com.egsys.tasks.application.usecase.CriarTarefaCommand
 import br.com.egsys.tasks.application.usecase.CriarTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ExcluirTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ListarCategoriasUseCase
+import br.com.egsys.tasks.application.usecase.ListarHistoricoTarefaUseCase
 import br.com.egsys.tasks.application.usecase.ListarTarefasUseCase
 import br.com.egsys.tasks.domain.model.Categoria
 import br.com.egsys.tasks.domain.model.CategoriaId
@@ -15,6 +18,7 @@ import br.com.egsys.tasks.domain.model.DataHoraTarefa
 import br.com.egsys.tasks.domain.model.Descricao
 import br.com.egsys.tasks.domain.model.DescricaoCategoria
 import br.com.egsys.tasks.domain.model.Tarefa
+import br.com.egsys.tasks.domain.model.TarefaHistorico
 import br.com.egsys.tasks.domain.model.TarefaId
 import br.com.egsys.tasks.domain.model.TarefaStatus
 import br.com.egsys.tasks.domain.model.Titulo
@@ -79,6 +83,12 @@ class RestApiWebTest {
 
     @MockkBean
     private lateinit var excluirTarefa: ExcluirTarefaUseCase
+
+    @MockkBean
+    private lateinit var alterarStatusTarefa: AlterarStatusTarefaUseCase
+
+    @MockkBean
+    private lateinit var listarHistoricoTarefa: ListarHistoricoTarefaUseCase
 
     @MockkBean
     private lateinit var jwtService: JwtService
@@ -226,6 +236,107 @@ class RestApiWebTest {
     }
 
     @Test
+    fun `changes task status`() {
+        val command = slot<AlterarStatusTarefaCommand>()
+        every { alterarStatusTarefa.execute(capture(command)) } returns tarefa(status = TarefaStatus.EM_ANDAMENTO)
+
+        mockMvc
+            .perform(post("/api/v1/tarefas/$taskUuid/status/em-andamento"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("EM_ANDAMENTO"))
+
+        command.captured.id shouldBe taskUuid
+        command.captured.ownerId shouldBe ownerUuid
+        command.captured.status shouldBe TarefaStatus.EM_ANDAMENTO
+    }
+
+    @Test
+    fun `changes task status to done`() {
+        val command = slot<AlterarStatusTarefaCommand>()
+        every { alterarStatusTarefa.execute(capture(command)) } returns tarefa(status = TarefaStatus.CONCLUIDA)
+
+        mockMvc
+            .perform(post("/api/v1/tarefas/$taskUuid/status/concluida"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("CONCLUIDA"))
+
+        command.captured.status shouldBe TarefaStatus.CONCLUIDA
+    }
+
+    @Test
+    fun `changes task status to canceled`() {
+        val command = slot<AlterarStatusTarefaCommand>()
+        every { alterarStatusTarefa.execute(capture(command)) } returns tarefa(status = TarefaStatus.CANCELADA)
+
+        mockMvc
+            .perform(post("/api/v1/tarefas/$taskUuid/status/cancelada"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("CANCELADA"))
+
+        command.captured.status shouldBe TarefaStatus.CANCELADA
+    }
+
+    @Test
+    fun `rejects invalid task status slug`() {
+        mockMvc
+            .perform(post("/api/v1/tarefas/$taskUuid/status/pendente"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.title").value("Requisicao invalida"))
+    }
+
+    @Test
+    fun `lists task history`() {
+        every { listarHistoricoTarefa.execute(taskUuid, ownerUuid) } returns
+            listOf(
+                TarefaHistorico(
+                    id = UUID.fromString("018f95df-0c7b-7af2-a199-447f82f36931"),
+                    tarefaId = TarefaId.from(taskUuid),
+                    ownerId = UsuarioId.from(ownerUuid),
+                    eventType = "TarefaCriada",
+                    changedFields = emptySet(),
+                    occurredAt = Instant.parse("2026-05-01T12:00:00Z"),
+                ),
+            )
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/$taskUuid/historico"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].eventType").value("TarefaCriada"))
+
+        verify(exactly = 1) { listarHistoricoTarefa.execute(taskUuid, ownerUuid) }
+    }
+
+    @Test
+    fun `exports tasks as csv`() {
+        every { listarTarefas.execute(ownerUuid) } returns listOf(tarefa(titulo = "Pagar, aluguel"))
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/export.csv"))
+            .andExpect(status().isOk)
+            .andExpect(header().string("Content-Type", "text/csv;charset=UTF-8"))
+            .andExpect { result ->
+                result.response.contentAsString
+                    .lines()
+                    .first() shouldBe
+                    "id,titulo,descricao,categoria,status,dataHora,criadaEm,atualizadaEm"
+                result.response.contentAsString.contains("\"Pagar, aluguel\"") shouldBe true
+            }
+    }
+
+    @Test
+    fun `exports tasks as csv without quoting simple fields`() {
+        every { listarTarefas.execute(ownerUuid) } returns listOf(tarefa(titulo = "Pagar aluguel"))
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/export.csv"))
+            .andExpect(status().isOk)
+            .andExpect { result ->
+                result.response.contentAsString.contains(",Pagar aluguel,") shouldBe true
+                result.response.contentAsString.contains("\"Pagar aluguel\"") shouldBe false
+            }
+    }
+
+    @Test
     fun `returns ProblemDetail for validation errors`() {
         mockMvc
             .perform(
@@ -324,6 +435,7 @@ class RestApiWebTest {
             titulo: String = "Pagar aluguel",
             id: UUID = taskUuid,
             dataHora: Instant = futureDate,
+            status: TarefaStatus = TarefaStatus.PENDENTE,
         ): Tarefa =
             Tarefa.reconstituir(
                 id = TarefaId.from(id),
@@ -332,7 +444,7 @@ class RestApiWebTest {
                 descricao = Descricao.of("Vencimento do contrato residencial"),
                 categoria = casa,
                 dataHora = DataHoraTarefa.existente(dataHora),
-                status = TarefaStatus.PENDENTE,
+                status = status,
                 criadaEm = Instant.parse("2026-05-01T12:00:00Z"),
                 atualizadaEm = Instant.parse("2026-05-01T12:00:00Z"),
                 excluidaEm = null,

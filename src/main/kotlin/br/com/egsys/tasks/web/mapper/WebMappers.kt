@@ -2,7 +2,9 @@ package br.com.egsys.tasks.web.mapper
 
 import br.com.egsys.tasks.domain.model.Categoria
 import br.com.egsys.tasks.domain.model.Tarefa
+import br.com.egsys.tasks.domain.model.TarefaHistorico
 import br.com.egsys.tasks.web.dto.CategoriaResponse
+import br.com.egsys.tasks.web.dto.TarefaHistoricoResponse
 import br.com.egsys.tasks.web.dto.TarefaResponse
 
 fun Categoria.toResponse(): CategoriaResponse =
@@ -21,4 +23,13 @@ fun Tarefa.toResponse(): TarefaResponse =
         status = status,
         criadaEm = criadaEm,
         atualizadaEm = atualizadaEm,
+    )
+
+fun TarefaHistorico.toResponse(): TarefaHistoricoResponse =
+    TarefaHistoricoResponse(
+        id = id,
+        tarefaId = tarefaId.value,
+        eventType = eventType,
+        changedFields = changedFields,
+        occurredAt = occurredAt,
     )

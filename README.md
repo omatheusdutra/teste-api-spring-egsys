@@ -4,9 +4,10 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1, 2, 3, 4, 5 e 6 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
+Etapas 0, 1, 2, 3, 4, 5, 6 e 7 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
-logs JSON, correlation ID, Prometheus autenticado, tracing OTLP e health checks customizados.
+logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
+Outbox, historico auditavel e CSV.
 
 ## Stack Base
 
@@ -43,7 +44,10 @@ Endpoints implementados:
 - `POST /api/v1/tarefas`
 - `GET /api/v1/tarefas/{id}`
 - `GET /api/v1/tarefas?cursor={cursor}&limit={1..100}`
+- `GET /api/v1/tarefas/export.csv`
 - `PUT /api/v1/tarefas/{id}`
+- `POST /api/v1/tarefas/{id}/status/{em-andamento|concluida|cancelada}`
+- `GET /api/v1/tarefas/{id}/historico`
 - `DELETE /api/v1/tarefas/{id}`
 - `GET /actuator/health` (autenticado)
 - `GET /actuator/prometheus` (autenticado)
@@ -64,6 +68,19 @@ cursor-based, evitando offset em colecoes grandes.
 | Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` |
 | Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` |
 | Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
+| Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` |
+| Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` |
+| CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` |
+
+## Inovacoes Entregues
+
+| Diferencial | Implementacao |
+| --- | --- |
+| Soft delete com trilha de auditoria | `excluida_em` + evento `TarefaExcluida` em historico/outbox |
+| Status de tarefa com maquina de estados | Dominio valida transicoes; API expõe endpoint de status |
+| Eventos de dominio + Outbox Pattern | `outbox_events` gravado na mesma transacao do aggregate |
+| Historico de mudancas por tarefa | `tarefa_historico` consultavel por tarefa e usuario |
+| Exportacao CSV | `GET /api/v1/tarefas/export.csv` |
 
 ## Observabilidade
 
@@ -106,3 +123,4 @@ Rel(infra, redis, "RESP")
 | [0003](docs/adr/0003-api-rest-problemdetail-cursor.md) | API REST com ProblemDetail e cursor pagination |
 | [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Seguranca JWT RS256, RBAC e anti-IDOR |
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
+| [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |

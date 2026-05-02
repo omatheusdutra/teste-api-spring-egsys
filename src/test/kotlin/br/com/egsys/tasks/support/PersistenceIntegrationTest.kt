@@ -1,9 +1,12 @@
 package br.com.egsys.tasks.support
 
 import br.com.egsys.tasks.infrastructure.persistence.adapter.JpaCategoriaRepository
+import br.com.egsys.tasks.infrastructure.persistence.adapter.JpaTarefaHistoricoRepository
 import br.com.egsys.tasks.infrastructure.persistence.adapter.JpaTarefaRepository
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -12,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import java.time.Clock
 
 @DataJpaTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -21,8 +25,16 @@ import org.testcontainers.utility.DockerImageName
 @Import(
     JpaCategoriaRepository::class,
     JpaTarefaRepository::class,
+    JpaTarefaHistoricoRepository::class,
+    PersistenceIntegrationTest.PersistenceTestConfig::class,
 )
 abstract class PersistenceIntegrationTest {
+    @TestConfiguration
+    class PersistenceTestConfig {
+        @Bean
+        fun clock(): Clock = Clock.systemUTC()
+    }
+
     companion object {
         @Container
         @JvmField
