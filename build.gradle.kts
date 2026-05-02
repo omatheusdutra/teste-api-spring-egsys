@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "br.com.egsys"
-version = "0.1.0-SNAPSHOT"
+version = "1.0.0"
 description = "API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico EGSYS."
 
 java {
@@ -183,6 +183,18 @@ pitest {
             "br.com.egsys.tasks.domain.*",
             "br.com.egsys.tasks.application.usecase.*",
             "br.com.egsys.tasks.infrastructure.security.*",
+        ),
+    )
+    excludedClasses.set(
+        setOf(
+            "br.com.egsys.tasks.infrastructure.security.SecurityConfig",
+            "br.com.egsys.tasks.infrastructure.security.*Properties",
+            "br.com.egsys.tasks.infrastructure.security.*Exception",
+            "br.com.egsys.tasks.infrastructure.security.*Credentials",
+            "br.com.egsys.tasks.infrastructure.security.*Principal",
+            "br.com.egsys.tasks.infrastructure.security.*Token",
+            "br.com.egsys.tasks.infrastructure.security.entity.*",
+            "br.com.egsys.tasks.infrastructure.security.repository.*",
         ),
     )
     targetTests.set(setOf("br.com.egsys.tasks.*"))

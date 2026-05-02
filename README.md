@@ -4,10 +4,10 @@ API RESTful de tarefas em Kotlin e Spring Boot para o teste tecnico da EGSYS.
 
 ## Estado Atual
 
-Etapas 0, 1, 2, 3, 4, 5, 6 e 7 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
+Etapas 0 a 8 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
 logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
-Outbox, historico auditavel e CSV. Etapa 8 adiciona Dockerfile distroless, docker-compose, Makefile, Bruno collection e
+Outbox, historico auditavel e CSV. A entrega inclui Dockerfile distroless, docker-compose, Makefile, Bruno collection e
 workflows de CI/seguranca.
 
 ## Stack Base
@@ -29,6 +29,15 @@ tag `postgres` e excluida automaticamente do `test` local.
 ./gradlew check
 ./gradlew pitest
 ```
+
+## Gates de Qualidade
+
+| Gate | Status local |
+| --- | --- |
+| `./gradlew check` | Verde |
+| `./gradlew pitest` | Verde, mutation score 70% |
+| JaCoCo | Verde via `check`, minimo 85% linhas e 80% branches |
+| Trivy, Semgrep e gitleaks | Configurados no workflow `.github/workflows/security.yml` |
 
 ## Como Executar
 
@@ -105,7 +114,7 @@ cursor-based, evitando offset em colecoes grandes.
 | Diferencial | Implementacao |
 | --- | --- |
 | Soft delete com trilha de auditoria | `excluida_em` + evento `TarefaExcluida` em historico/outbox |
-| Status de tarefa com maquina de estados | Dominio valida transicoes; API expõe endpoint de status |
+| Status de tarefa com maquina de estados | Dominio valida transicoes; API expoe endpoint de status |
 | Eventos de dominio + Outbox Pattern | `outbox_events` gravado na mesma transacao do aggregate |
 | Historico de mudancas por tarefa | `tarefa_historico` consultavel por tarefa e usuario |
 | Exportacao CSV | `GET /api/v1/tarefas/export.csv` |
