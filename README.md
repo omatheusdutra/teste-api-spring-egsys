@@ -2,38 +2,70 @@
 
 [![CI](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/ci.yml)
 [![Security](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/omatheusdutra/teste-api-spring-egsys/actions/workflows/security.yml)
-[![Release](https://img.shields.io/github/v/tag/omatheusdutra/teste-api-spring-egsys?label=release&sort=semver)](https://github.com/omatheusdutra/teste-api-spring-egsys/releases/tag/v1.0.0)
+[![Release](https://img.shields.io/github/v/tag/omatheusdutra/teste-api-spring-egsys?label=release&sort=semver)](https://github.com/omatheusdutra/teste-api-spring-egsys/tags)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x-6DB33F?logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 
-API RESTful de tarefas em Kotlin + Spring Boot, desenhada como backend production-ready para o teste tecnico da EGSYS:
-segura por padrao, observavel, testavel e pronta para rodar em containers.
+API RESTful de tarefas em Kotlin + Spring Boot, construída para o teste técnico da EGSYS com foco de produção:
+segurança por padrão, arquitetura hexagonal, observabilidade, testes automatizados e experiência de avaliação rápida.
 
-## ✅ Estado Atual
+## ✅ Entrega
 
-Etapas 0 a 9 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL, casos de uso,
-API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
-logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
-Outbox, historico auditavel e CSV. A entrega inclui Dockerfile distroless, docker-compose, Makefile, Bruno collection e
-workflows de CI/seguranca. O projeto tambem inclui playground interativo como demo controlada e pentest defensivo reproduzivel
-com 49 cenarios.
+- CRUD completo de tarefas e listagem de categorias.
+- Autenticação com JWT RS256, refresh token rotation, revogação por Redis, Argon2id e RBAC.
+- Anti-IDOR por ownership no servidor, DTOs explícitos e validações com ProblemDetail.
+- Soft delete, status com máquina de estados, histórico auditável, Outbox Pattern e exportação CSV.
+- Logs JSON com correlation ID, métricas Prometheus protegidas, tracing OTLP e health checks customizados.
+- Docker Compose com API, PostgreSQL, Redis, Prometheus e Grafana.
+- Playground interativo em `/playground`, com modo demo controlado em produção.
+- Scripts de pentest defensivo reproduzíveis em `tools/pentest/`.
 
-## 🧱 Stack Base
+## 🧱 Stack
 
-- Kotlin 2.x, JVM 21, Spring Boot 3.5.x
-- Gradle Kotlin DSL
-- PostgreSQL, Redis, Spring Data JPA, Flyway
-- Spring Security, JJWT, Bouncy Castle
-- JUnit 5, Kotest assertions, MockK, Testcontainers, ArchUnit
-- ktlint, detekt, JaCoCo, Pitest
-- Micrometer, Prometheus, OpenTelemetry e logs JSON
+- Kotlin 2.x, JVM 21, Spring Boot 3.5.x, Gradle Kotlin DSL.
+- PostgreSQL 16, Redis 7, Spring Data JPA, Hibernate e Flyway.
+- Spring Security 6, JJWT, Bouncy Castle, Jakarta Bean Validation.
+- JUnit 5, Kotest assertions, MockK, Testcontainers, ArchUnit, JaCoCo e Pitest.
+- Micrometer, Prometheus, OpenTelemetry, Logback JSON.
+- Dockerfile multi-stage/distroless, GitHub Actions, Trivy, Semgrep e gitleaks.
+
+## 🐳 Como Executar
+
+Subir tudo em containers:
+
+```bash
+docker compose up -d --build
+```
+
+Rodar a API local usando Postgres/Redis do Compose:
+
+```bash
+docker compose up -d postgres redis
+./gradlew bootRun
+```
+
+Habilitar playground com demonstrações ofensivas em ambiente controlado:
+
+```bash
+docker compose up -d postgres redis
+SPRING_PROFILES_ACTIVE=dev EGSYS_DB_PASSWORD=egsys_local_password ./gradlew bootRun
+```
+
+Comandos curtos também estão no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
+
+## ⚡ Tour de 30s
+
+1. Abra `http://localhost:8080` e clique em **Abrir Playground Interativo**, ou acesse `http://localhost:8080/playground`.
+2. Registre um usuário ou faça login pelo painel de autenticação.
+3. Crie uma tarefa, liste, altere status, consulte histórico e exporte CSV.
+4. Em `dev`/`local`, use **Provoque uma defesa** para ver a API bloqueando cenários de ataque.
+
+Alternativa via cliente HTTP: importe a coleção Bruno em `bruno/egsys-tasks-api` e execute `01 Register`, `02 Login`,
+`03 Create Task` e `04 List Tasks`.
 
 ## 🧪 Como Testar
-
-Pre-requisitos: JDK 21. Docker e necessario para executar os testes de persistencia com Testcontainers; sem Docker, a
-tag `postgres` e excluida automaticamente do `test` local.
 
 ```bash
 ./gradlew check
@@ -50,152 +82,82 @@ bash tools/pentest/02-input-sqli-xss.sh
 bash tools/pentest/03-rate-headers-playground.sh
 ```
 
-## 🛡️ Gates de Qualidade
+Evidências:
 
-| Gate | Status local |
-| --- | --- |
-| `./gradlew check` | Verde |
-| `./gradlew pitest` | Verde, mutation score 70% |
-| JaCoCo | Verde via `check`, minimo 85% linhas e 80% branches |
-| Trivy, Semgrep e gitleaks | Configurados no workflow `.github/workflows/security.yml` |
+- Relatório de pentest: [docs/pentest/REPORT-2026-05-02.md](docs/pentest/REPORT-2026-05-02.md).
+- Manual dos scripts: [tools/pentest/README.md](tools/pentest/README.md).
 
-## 🐳 Como Executar
+## 🎮 Playground Interativo
 
-Subir dependencias e API em containers:
+O playground é servido por `PlaygroundController` quando `egsys.playground.enabled=true`. O HTML fica fora de
+`resources/static`, então não há bypass pelo static resource handler.
 
-```bash
-docker compose up -d --build
-```
+Em produção, ele funciona como demo controlada: autenticação, CRUD e visualização continuam disponíveis, mas o painel
+ofensivo fica bloqueado por `egsys.playground.attack-demos-enabled=false`. Em `dev`/`local`, os botões ofensivos ficam
+ativos para validação defensiva.
 
-Rodar a API local usando Postgres/Redis do compose:
+Garantias do frontend:
 
-```bash
-docker compose up -d postgres redis
-./gradlew bootRun
-```
+- token apenas em memória JS;
+- sem `localStorage`, `sessionStorage`, `eval` ou handlers inline;
+- renderização com `createElement`/`textContent`;
+- CSP e headers de segurança preservados.
 
-Rodar com playground interativo e demonstracoes ofensivas habilitadas:
-
-```bash
-docker compose up -d postgres redis
-SPRING_PROFILES_ACTIVE=dev EGSYS_DB_PASSWORD=egsys_local_password ./gradlew bootRun
-```
-
-Comandos curtos tambem estao no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
-
-Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e substitua o placeholder de
-`config/prometheus/secrets/api-token.example` no formato `Bearer <token>` no seu ambiente local.
-
-## ⚡ Tour de 30s
-
-1. Abra `http://localhost:8080/playground` ou use o botao "Abrir Playground Interativo" na home publica.
-2. Registre ou faca login pelo painel de auth.
-3. Crie uma tarefa, liste, altere status e abra o historico.
-4. Em `dev`/`local`, use "Provoque uma defesa" para ver rate limit, IDOR, JWT adulterado, SQLi e mass assignment sendo bloqueados.
-
-Alternativa via cliente HTTP: abra a colecao Bruno `bruno/egsys-tasks-api`, execute `01 Register`, `02 Login`,
-`03 Create Task` e `04 List Tasks`.
-
-## Playground Interativo
-
-O playground fica em `/playground` e tambem pode ser acessado pelo CTA futurista da home publica. Ele nao mora em
-`static/`; e servido por `PlaygroundController` somente quando `egsys.playground.enabled=true`, conforme
-[ADR 0009](docs/adr/0009-playground-production-demo-controlled.md).
-
-Em producao, o playground funciona como demo controlada: auth, CRUD e visualizacao da API ficam disponiveis, mas o
-painel "Provoque uma defesa" e bloqueado por `egsys.playground.attack-demos-enabled=false`. O pentest ofensivo completo
-permanece em `dev`/`local`/sandbox.
-
-- Auth completo: registrar, login, refresh, logout e countdown do JWT.
-- CRUD/tour de tarefas: categorias, criacao, listagem, status, historico e CSV.
-- Painel Request/Response com copiar como `curl` e repetir request.
-- Demonstracoes defensivas: rate limit, IDOR, token adulterado/expirado, SQLi e mass assignment, habilitadas apenas em ambiente controlado.
-- Hardening frontend: token apenas em memoria JS, sem `localStorage`, sem `sessionStorage`, sem `eval`, sem inline handlers.
+Decisão arquitetural: [ADR 0009](docs/adr/0009-playground-production-demo-controlled.md).
 
 ## 📚 API REST v1
 
 Swagger UI: `/swagger-ui.html`
 
-Endpoints implementados:
+Endpoints principais:
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/logout`
-- `POST /api/v1/auth/revoke-all/{userId}` (`ROLE_ADMIN`)
-- `GET /api/v1/categorias`
-- `POST /api/v1/tarefas`
-- `GET /api/v1/tarefas/{id}`
-- `GET /api/v1/tarefas?cursor={cursor}&limit={1..100}`
-- `GET /api/v1/tarefas/export.csv`
-- `PUT /api/v1/tarefas/{id}`
-- `POST /api/v1/tarefas/{id}/status/{em-andamento|concluida|cancelada}`
-- `GET /api/v1/tarefas/{id}/historico`
-- `DELETE /api/v1/tarefas/{id}`
-- `GET /actuator/health` (autenticado)
-- `GET /actuator/prometheus` (autenticado)
-- `GET /playground` (demo controlada por `egsys.playground.enabled`)
-- `GET /playground/config` (informa se demos ofensivas estao habilitadas)
+- Auth: `POST /api/v1/auth/register`, `/login`, `/refresh`, `/logout`, `/revoke-all/{userId}`.
+- Categorias: `GET /api/v1/categorias`.
+- Tarefas: `POST /api/v1/tarefas`, `GET /api/v1/tarefas`, `GET /api/v1/tarefas/{id}`,
+  `PUT /api/v1/tarefas/{id}`, `DELETE /api/v1/tarefas/{id}`.
+- Status/histórico/exportação: `POST /api/v1/tarefas/{id}/status/{status}`,
+  `GET /api/v1/tarefas/{id}/historico`, `GET /api/v1/tarefas/export.csv`.
+- Observabilidade: `GET /actuator/health`, `GET /actuator/prometheus`.
+- Demo: `GET /playground`, `GET /playground/config`.
 
-Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
-cursor-based, evitando offset em colecoes grandes.
+Erros HTTP usam RFC 7807 `ProblemDetail`. Listagens usam paginação cursor-based.
 
-## 🧨 Superficie de Ataque
+## 🛡️ Superfície de Ataque
 
-Pentest interno reproduzivel em `tools/pentest/` confirmado em 2026-05-02. Relatorio:
-[docs/pentest/REPORT-2026-05-02.md](docs/pentest/REPORT-2026-05-02.md).
-
-| Vetor | Defesa implementada | Teste automatizado | Pentest interno |
-| --- | --- | --- | --- |
-| JWT `alg=none` / HS256 | rejeicao explicita de algoritmo diferente de RS256 antes da assinatura | `AuthenticationTests` | `01-auth-idor.sh` #5-6 PASS |
-| Token expirado, adulterado, iss/aud errado ou JTI revogado | validacao rigorosa de claims + blacklist Redis por JTI | `AuthenticationTests` | `01-auth-idor.sh` #3-10 PASS |
-| Refresh token reutilizado | rotacao a cada uso e revogacao da familia | `RefreshTokenReuseTests` | `01-auth-idor.sh` #11 PASS |
-| IDOR em tarefas | `owner_id` no dominio, use cases e queries de repositorio | `TarefaJpaRepositoryIntegrationTest` | `01-auth-idor.sh` #12-14 PASS |
-| Acesso USER a endpoint ADMIN | RBAC com `@PreAuthorize` | `AuthorizationAndHeadersTests` | `01-auth-idor.sh` #15-16 PASS |
-| Mass assignment | DTOs explicitos e `ignoreUnknown=false` | `MassAssignmentTests` | `02-input-sqli-xss.sh` #17-19 PASS |
-| Payload bombing / JSON malformado | limites de tamanho + Bean Validation + Jackson constraints | `InputValidationTests` | `02-input-sqli-xss.sh` #20-26 PASS |
-| SQL injection | JPA/JPQL parametrizado e cursor opaco | `SqlInjectionTests` | `02-input-sqli-xss.sh` #27-30 PASS |
-| XSS/reflection | JSON `Content-Type`, `nosniff` e playground com `textContent` | `XssReflectionTests`, `PlaygroundFrontendTest` | `02-input-sqli-xss.sh` #31-33 PASS |
-| Brute force | rate limiting por IP/usuario com `Retry-After` | `AuthorizationAndHeadersTests` | `03-rate-headers-playground.sh` #34-35 PASS |
-| Headers ausentes | CSP, HSTS, no-sniff, frame deny, no-referrer, permissions policy | `AuthorizationAndHeadersTests` | `03-rate-headers-playground.sh` #38-41 PASS/INFO |
-| Stack trace/info leak | ProblemDetail sem stack trace e `Server` removido | `InfoLeakTests` | `03-rate-headers-playground.sh` #41-42 PASS |
-| Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` | coberto por teste |
-| Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` | `01-auth-idor.sh` #15 PASS |
-| Playground ofensivo em prod | demo permitida por propriedade, mas demos ofensivas bloqueadas por `attack-demos-enabled=false`; HTML fora de `static/` | `PlaygroundAvailabilityTests`, `PlaygroundFrontendTest` | `03-rate-headers-playground.sh` #44-49 PASS |
-| Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` | coberto por teste |
-| Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` | coberto por teste |
-| CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` | coberto por teste |
-
-## ✨ Inovacoes Entregues
-
-| Diferencial | Implementacao |
-| --- | --- |
-| Soft delete com trilha de auditoria | `excluida_em` + evento `TarefaExcluida` em historico/outbox |
-| Status de tarefa com maquina de estados | Dominio valida transicoes; API expoe endpoint de status |
-| Eventos de dominio + Outbox Pattern | `outbox_events` gravado na mesma transacao do aggregate |
-| Historico de mudancas por tarefa | `tarefa_historico` consultavel por tarefa e usuario |
-| Exportacao CSV | `GET /api/v1/tarefas/export.csv` |
+| Vetor | Defesa | Evidência |
+| --- | --- | --- |
+| JWT `alg=none` / HS256 | rejeição explícita de algoritmos não RS256 | `AuthenticationTests`, `01-auth-idor.sh` |
+| Token expirado, adulterado ou revogado | claims rigorosas + blacklist Redis por JTI | `AuthenticationTests`, `JwtReplayTests` |
+| Refresh token reutilizado | rotação e revogação da família | `RefreshTokenReuseTests` |
+| IDOR em tarefas | ownership em use cases e queries por `owner_id` | `IdorTests`, `01-auth-idor.sh` |
+| Mass assignment | DTOs explícitos e `ignoreUnknown=false` | `MassAssignmentTests` |
+| SQL injection | JPA/JPQL parametrizado e cursor opaco | `SqlInjectionTests`, `02-input-sqli-xss.sh` |
+| XSS/reflection | JSON correto, `nosniff`, CSP e `textContent` no playground | `XssReflectionTests`, `PlaygroundFrontendTest` |
+| Brute force / abuso | rate limiting por IP/usuário com `Retry-After` | `BruteForceTests`, `03-rate-headers-playground.sh` |
+| Info leak | ProblemDetail sem stack trace e header `Server` removido | `InfoLeakTests` |
+| Métricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
+| Playground ofensivo em prod | demo permitida, ataques bloqueados por propriedade | `PlaygroundAvailabilityTests` |
 
 ## 📈 Observabilidade
 
-- Logs JSON no console via `logback-spring.xml`, com `correlationId` e `userId` no MDC quando presentes.
-- `X-Correlation-Id` e propagado em toda resposta; valores invalidos sao descartados.
-- Metricas Prometheus disponiveis em `/actuator/prometheus`, protegidas por JWT.
-- Traces saem via OTLP em `OTEL_EXPORTER_OTLP_ENDPOINT` com sampling configuravel por `EGSYS_TRACING_SAMPLE_PROBABILITY`.
-- Health checks customizados validam PostgreSQL (`SELECT 1`) e Redis (`PING`).
+- Logs JSON com `correlationId` e `userId` no MDC quando presentes.
+- `X-Correlation-Id` propagado em toda resposta; valores inválidos são descartados.
+- Prometheus protegido por JWT em `/actuator/prometheus`.
+- Tracing via OTLP em `OTEL_EXPORTER_OTLP_ENDPOINT`.
+- Health checks customizados para PostgreSQL e Redis.
 
 ## 🏗️ Arquitetura
 
 ```mermaid
 C4Container
-title EGSYS Tasks API - bootstrap
+title EGSYS Tasks API
 
-Person(user, "Usuario autenticado")
+Person(user, "Usuário autenticado")
 System_Boundary(api, "Tasks API") {
   Container(web, "Web Adapter", "Spring MVC", "Controllers, DTOs, ProblemDetail")
   Container(app, "Application", "Kotlin", "Casos de uso")
   Container(domain, "Domain", "Kotlin puro", "Entidades, VOs, eventos e portas")
-  Container(infra, "Infrastructure", "Spring/JPA/Redis", "Persistencia, seguranca, mensageria")
+  Container(infra, "Infrastructure", "Spring/JPA/Redis", "Persistência, segurança, mensageria")
 }
 SystemDb(postgres, "PostgreSQL 16", "Dados transacionais")
 SystemDb(redis, "Redis 7", "Token store, cache e rate limiting")
@@ -210,24 +172,24 @@ Rel(infra, redis, "RESP")
 
 ## 📝 ADRs
 
-| ADR | Decisao |
+| ADR | Decisão |
 | --- | --- |
 | [0001](docs/adr/0001-bootstrap-stack.md) | Bootstrap stack |
-| [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistencia PostgreSQL, Flyway e JPA |
+| [0002](docs/adr/0002-persistencia-postgresql-flyway-jpa.md) | Persistência PostgreSQL, Flyway e JPA |
 | [0003](docs/adr/0003-api-rest-problemdetail-cursor.md) | API REST com ProblemDetail e cursor pagination |
-| [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Seguranca JWT RS256, RBAC e anti-IDOR |
+| [0004](docs/adr/0004-seguranca-jwt-rs256-rbac.md) | Segurança JWT RS256, RBAC e anti-IDOR |
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
-| [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |
+| [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Outbox, histórico, status e CSV |
 | [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
-| [0008](docs/adr/0008-playground-dev-only.md) | Playground interativo dev-only (substituida) |
+| [0008](docs/adr/0008-playground-dev-only.md) | Decisão anterior do playground, substituída |
 | [0009](docs/adr/0009-playground-production-demo-controlled.md) | Playground como demo controlada por propriedades |
 
 ## 🗺️ Roadmap Futuro
 
 | Item | Motivo |
 | --- | --- |
-| Worker de Outbox | publicar notificacoes/email/WebSocket com retry e idempotencia |
-| Importacao CSV/iCal | fechar ciclo de interoperabilidade de tarefas |
-| Dashboards Grafana versionados | entregar paineis prontos alem do datasource |
+| Worker de Outbox | publicar notificações/email/WebSocket com retry e idempotência |
+| Importação CSV/iCal | fechar ciclo de interoperabilidade de tarefas |
+| Dashboards Grafana versionados | entregar painéis prontos além do datasource |
 | Push de imagem GHCR | publicar imagem assinada em tags `v*` |
 | OWASP Dependency-Check com NVD API key | tornar SCA menos sujeito a rate limit externo |
