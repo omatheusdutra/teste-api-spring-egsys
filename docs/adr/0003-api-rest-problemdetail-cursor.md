@@ -7,7 +7,7 @@ Accepted
 ## Context
 
 A Etapa 4 precisa expor categorias e tarefas por HTTP sem vazar entidades de dominio ou JPA. A API tambem precisa ter
-contratos previsiveis para validacao, erros e listagens grandes, porque a Etapa 5 adicionara seguranca em cima desses
+contratos previsíveis para validação, erros e listagens grandes, porque a Etapa 5 adicionará segurança em cima desses
 endpoints.
 
 ## Decision
@@ -23,5 +23,5 @@ Listagens de tarefas usam paginacao cursor-based em vez de offset. O cursor e op
 
 ## Consequences
 
-A camada web fica explicita e testavel, com contratos estaveis para evolucao de seguranca e autorizacao. A paginacao
+A camada web fica explícita e testável, com contratos estáveis para evolução de segurança e autorização. A paginação
 cursor-based evita custos crescentes de offset, mas exige que clientes tratem o `nextCursor` como valor opaco.

@@ -20,11 +20,11 @@ As entidades JPA ficam restritas a `infrastructure.persistence.entity`. O domini
 entre entidades JPA e agregados de dominio, falhando explicitamente quando uma entidade persistida estiver incompleta.
 
 Os testes de persistencia usam Testcontainers com `postgres:16-alpine`. Eles sao marcados com a tag `postgres`, e o
-Gradle exclui essa tag apenas quando `docker info` nao estiver disponivel no ambiente local. No CI com Docker, os testes
+Gradle exclui essa tag apenas quando `docker info` não estiver disponível no ambiente local. No CI com Docker, os testes
 rodam contra PostgreSQL real. Os contextos JPA sao descartados por classe para evitar reutilizar uma URL de container ja
 encerrado.
 
 ## Consequences
 
-Nao ha divergencia de comportamento causada por H2. A suite de integracao fica mais lenta que testes unitarios puros,
-mas valida migrations, constraints, indices, mapeamento JPA e soft delete com o mesmo banco esperado em producao.
+Não há divergência de comportamento causada por H2. A suíte de integração fica mais lenta que testes unitários puros,
+mas valida migrations, constraints, índices, mapeamento JPA e soft delete com o mesmo banco esperado em produção.

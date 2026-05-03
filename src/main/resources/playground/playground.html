@@ -21,7 +21,7 @@
     </a>
     <div>
       <div class="brand-title">Tasks API · Playground</div>
-      <div class="brand-sub">demo controlada · tokens em <code>memoria</code> · ataques apenas em <code>sandbox</code></div>
+      <div class="brand-sub">demo controlada · tokens em <code>memória</code> · ataques apenas em <code>sandbox</code></div>
     </div>
   </div>
   <div class="topbar-right">
@@ -36,7 +36,7 @@
   <section class="left">
     <div class="card auth-card">
       <header class="card-header">
-        <h2>Autenticacao</h2>
+        <h2>Autenticação</h2>
         <span id="countdown" class="hint">access expira em --:--</span>
       </header>
       <div id="auth-body" class="auth-body">
@@ -62,7 +62,7 @@
     <div class="card defense-demos" id="defense-demos-card">
       <header class="card-header">
         <h2>Provoque uma defesa</h2>
-        <span class="hint">cada botao ataca a propria API e mostra se a defesa segurou</span>
+        <span class="hint">cada botão ataca a própria API e mostra se a defesa segurou</span>
       </header>
       <p class="sandbox-banner">
         🧪 Sandbox controlado — todos os ataques são contra a própria API local. Nenhum dado real é afetado. Use à vontade.
@@ -80,7 +80,7 @@
         <button class="demo-btn" type="button" data-demo="idor">
           <span class="demo-icon">🎭</span>
           <span class="demo-title">Tentar IDOR</span>
-          <span class="demo-desc">le tarefa por UUID aleatorio</span>
+          <span class="demo-desc">lê tarefa por UUID aleatório</span>
           <span class="demo-verdict" data-verdict="idor">aguardando</span>
         </button>
         <button class="demo-btn" type="button" data-demo="tampered-jwt">
@@ -98,7 +98,7 @@
         <button class="demo-btn" type="button" data-demo="sqli">
           <span class="demo-icon">💉</span>
           <span class="demo-title">SQLi em cursor</span>
-          <span class="demo-desc">payload classico em parametro</span>
+          <span class="demo-desc">payload clássico em parâmetro</span>
           <span class="demo-verdict" data-verdict="sqli">aguardando</span>
         </button>
         <button class="demo-btn" type="button" data-demo="mass-assignment">
@@ -114,7 +114,7 @@
       <button id="tab-btn-tarefas" class="tab" data-tab="tarefas" role="tab" aria-controls="tab-tarefas" aria-selected="true" tabindex="0">Tarefas</button>
       <button id="tab-btn-categorias" class="tab" data-tab="categorias" role="tab" aria-controls="tab-categorias" aria-selected="false" tabindex="-1">Categorias</button>
       <button id="tab-btn-auditoria" class="tab" data-tab="auditoria" role="tab" aria-controls="tab-auditoria" aria-selected="false" tabindex="-1">Auditoria</button>
-      <button id="tab-btn-metricas" class="tab" data-tab="metricas" role="tab" aria-controls="tab-metricas" aria-selected="false" tabindex="-1">Metricas</button>
+      <button id="tab-btn-metricas" class="tab" data-tab="metricas" role="tab" aria-controls="tab-metricas" aria-selected="false" tabindex="-1">Métricas</button>
     </nav>
 
     <section id="tab-tarefas" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-tarefas">
@@ -124,15 +124,15 @@
           <span class="hint">CRUD completo via JWT</span>
         </header>
         <label class="search-label">Buscar tarefa
-          <input id="task-search" type="search" autocomplete="off" placeholder="titulo, descricao, categoria ou status">
+          <input id="task-search" type="search" autocomplete="off" placeholder="título, descrição, categoria ou status">
         </label>
         <form id="tarefa-form" class="grid-form">
-          <label>Titulo <input name="titulo" maxlength="200" required></label>
+          <label>Título <input name="titulo" maxlength="200" required></label>
           <label>Categoria
             <select name="categoriaId" required><option value="">--</option></select>
           </label>
           <label>Data e hora <input name="dataHora" type="datetime-local" required></label>
-          <label class="full">Descricao <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
+          <label class="full">Descrição <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
           <button class="btn btn-primary" type="submit">Criar tarefa</button>
         </form>
         <div id="tarefa-list" class="task-list" aria-live="polite"></div>
@@ -143,7 +143,7 @@
       <div class="card">
         <header class="card-header">
           <h2>Categorias</h2>
-          <span class="hint">somente leitura nesta versao</span>
+          <span class="hint">somente leitura nesta versão</span>
         </header>
         <div id="categoria-list" class="task-list" aria-live="polite"></div>
       </div>
@@ -152,8 +152,8 @@
     <section id="tab-auditoria" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-auditoria" hidden>
       <div class="card">
         <header class="card-header">
-          <h2>Auditoria da sessao</h2>
-          <span class="hint">cada chamada feita por esta pagina</span>
+          <h2>Auditoria da sessão</h2>
+          <span class="hint">cada chamada feita por esta página</span>
         </header>
         <div id="audit-list" class="audit-list"></div>
       </div>
@@ -162,7 +162,7 @@
     <section id="tab-metricas" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-metricas" hidden>
       <div class="card">
         <header class="card-header">
-          <h2>Metricas ao vivo</h2>
+          <h2>Métricas ao vivo</h2>
           <span class="hint">polling a cada 5s em /actuator/prometheus</span>
         </header>
         <div id="metrics-grid" class="metrics-grid">
@@ -171,8 +171,8 @@
           <div class="metric"><span class="metric-label">4xx total</span><span class="metric-value" id="m-4xx">--</span></div>
           <div class="metric"><span class="metric-label">5xx total</span><span class="metric-value" id="m-5xx">--</span></div>
         </div>
-        <svg id="latency-sparkline" class="sparkline" viewBox="0 0 240 48" role="img" aria-label="Historico de latencia P95"></svg>
-        <p class="hint" id="metrics-hint">faca login com um usuario que tenha role <code>ADMIN</code> para ver dados.</p>
+        <svg id="latency-sparkline" class="sparkline" viewBox="0 0 240 48" role="img" aria-label="Histórico de latência P95"></svg>
+        <p class="hint" id="metrics-hint">faça login com um usuário que tenha role <code>ADMIN</code> para ver dados.</p>
       </div>
     </section>
   </section>
@@ -180,7 +180,7 @@
   <aside class="right">
     <div class="card req-card">
       <header class="card-header">
-        <h2>Ultima requisicao</h2>
+        <h2>Última requisição</h2>
         <div class="req-actions">
           <button id="copy-curl" class="btn btn-ghost" type="button" disabled>Copiar curl</button>
           <button id="repeat-req" class="btn btn-ghost" type="button" disabled>Repetir</button>
@@ -209,7 +209,7 @@
 <footer class="defense-bar" aria-live="polite">
   <span class="pill" id="pill-rate">rate limit: --</span>
   <span class="pill" id="pill-jwt">jwt: --</span>
-  <span class="pill" id="pill-defense">ultima defesa acionada: nenhuma</span>
+  <span class="pill" id="pill-defense">última defesa acionada: nenhuma</span>
 </footer>
 
 <div id="toast-host" class="toast-host" aria-live="assertive"></div>
@@ -218,10 +218,10 @@
   <form id="edit-form" method="dialog" class="grid-form">
     <h3>Editar tarefa</h3>
     <input type="hidden" name="id">
-    <label>Titulo <input name="titulo" required maxlength="200"></label>
+    <label>Título <input name="titulo" required maxlength="200"></label>
     <label>Categoria <select name="categoriaId" required></select></label>
     <label>Data e hora <input name="dataHora" type="datetime-local" required></label>
-    <label class="full">Descricao <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
+    <label class="full">Descrição <textarea name="descricao" maxlength="2000" rows="2"></textarea></label>
     <div class="dialog-actions">
       <button class="btn btn-ghost" value="cancel" formmethod="dialog">Cancelar</button>
       <button class="btn btn-primary" id="edit-save" type="submit">Salvar</button>
@@ -244,14 +244,14 @@
   <form method="dialog">
     <h3>Atalhos</h3>
     <dl class="shortcut-grid">
-      <dt><kbd>c</kbd></dt><dd>foca o titulo da nova tarefa</dd>
+      <dt><kbd>c</kbd></dt><dd>foca o título da nova tarefa</dd>
       <dt><kbd>/</kbd></dt><dd>foca a busca de tarefas</dd>
       <dt><kbd>?</kbd></dt><dd>abre esta ajuda</dd>
-      <dt><kbd>Esc</kbd></dt><dd>fecha dialogs abertos</dd>
+      <dt><kbd>Esc</kbd></dt><dd>fecha diálogos abertos</dd>
       <dt><kbd>g</kbd> <kbd>t</kbd></dt><dd>vai para Tarefas</dd>
       <dt><kbd>g</kbd> <kbd>c</kbd></dt><dd>vai para Categorias</dd>
       <dt><kbd>g</kbd> <kbd>a</kbd></dt><dd>vai para Auditoria</dd>
-      <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>vai para Metricas</dd>
+      <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>vai para Métricas</dd>
     </dl>
     <div class="dialog-actions">
       <button class="btn btn-primary" value="ok" type="submit">Fechar</button>

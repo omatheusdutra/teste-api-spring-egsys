@@ -1,4 +1,4 @@
-# ADR 0006 - Inovacoes: Outbox, historico, status e CSV
+# ADR 0006 - Inovações: Outbox, histórico, status e CSV
 
 ## Status
 
@@ -7,7 +7,7 @@ Aceita
 ## Contexto
 
 O edital valoriza criatividade, mas a API deve continuar segura e manutenivel. As inovacoes escolhidas precisam agregar
-valor operacional sem criar atalhos inseguros ou dependencia de infraestrutura externa ainda nao entregue.
+valor operacional sem criar atalhos inseguros ou dependência de infraestrutura externa ainda não entregue.
 
 ## Decisao
 
@@ -16,9 +16,9 @@ Implementamos quatro diferenciais:
 - Maquina de estados exposta por endpoint: `PENDENTE -> EM_ANDAMENTO -> CONCLUIDA` ou `CANCELADA`, validada no dominio.
 - Outbox Pattern: eventos de dominio da tarefa sao gravados em `outbox_events` na mesma transacao da alteracao.
 - Historico auditavel por tarefa: os mesmos eventos alimentam `tarefa_historico`, filtrado por `owner_id` para evitar IDOR.
-- Exportacao CSV: tarefas ativas do usuario autenticado podem ser exportadas em `text/csv`, com escape seguro de campos.
+- Exportação CSV: tarefas ativas do usuário autenticado podem ser exportadas em `text/csv`, com escape seguro de campos.
 
-Soft delete ja existia nas etapas anteriores e agora passa a deixar rastro no historico quando a exclusao gera
+Soft delete já existia nas etapas anteriores e agora passa a deixar rastro no histórico quando a exclusão gera
 `TarefaExcluida`.
 
 ## Consequencias

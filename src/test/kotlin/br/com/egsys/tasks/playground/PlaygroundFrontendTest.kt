@@ -25,7 +25,7 @@ class PlaygroundFrontendTest {
 
     @Test
     fun `html externaliza javascript em vez de usar inline script (CSP friendly)`() {
-        // CSP global proibe inline-script. Logo, a unica forma de carregar JS e via src=.
+        // CSP global proíbe inline-script. Logo, a única forma de carregar JS é via src=.
         val inlineScriptOpenTag = Regex("<script(?![^>]*\\bsrc=)[^>]*>[\\s\\S]+?</script>", RegexOption.IGNORE_CASE)
         inlineScriptOpenTag.containsMatchIn(html).shouldBeFalse()
         html.shouldContain("http-equiv=\"Content-Security-Policy\"")
@@ -37,23 +37,23 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `html nao tem handlers inline tipo onclick onload onerror`() {
-        // CSP nao bloqueia handlers inline em todos os browsers, mas a politica de seguranca do projeto
-        // proibe HTML attribute handlers — eles sao vetor classico de XSS injetado.
+    fun `html não tem handlers inline tipo onclick onload onerror`() {
+        // CSP não bloqueia handlers inline em todos os browsers, mas a política de segurança do projeto
+        // proíbe HTML attribute handlers — eles são vetor clássico de XSS injetado.
         val attrHandler = Regex("\\son(click|load|error|input|change|submit|focus|blur)\\s*=", RegexOption.IGNORE_CASE)
         attrHandler.containsMatchIn(html).shouldBeFalse()
     }
 
     @Test
     fun `js nunca persiste token em storage do navegador`() {
-        // Verifica USO da API, nao mera mencao em comentario.
+        // Verifica USO da API, não mera menção em comentário.
         Regex("\\b(local|session)Storage\\s*[\\.\\[\\(]").containsMatchIn(js).shouldBeFalse()
         Regex("document\\.cookie\\s*=").containsMatchIn(js).shouldBeFalse()
     }
 
     @Test
-    fun `js nao usa eval new Function ou innerHTML para conteudo dinamico`() {
-        // eval e new Function() rodariam codigo arbitrario; innerHTML aceita HTML
+    fun `js não usa eval new Function ou innerHTML para conteúdo dinâmico`() {
+        // eval e new Function() rodariam código arbitrário; innerHTML aceita HTML
         // que reabriria XSS quando vier do servidor.
         Regex("\\beval\\s*\\(").containsMatchIn(js).shouldBeFalse()
         Regex("new\\s+Function\\s*\\(").containsMatchIn(js).shouldBeFalse()
@@ -63,40 +63,40 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `js nao usa confirm nativo do navegador`() {
+    fun `js não usa confirm nativo do navegador`() {
         Regex("(?<!function )\\bconfirm\\s*\\(").containsMatchIn(js).shouldBeFalse()
         html.shouldContain("id=\"confirm-dialog\"")
         js.shouldContain("function confirmAction")
     }
 
     @Test
-    fun `js usa textContent ou createElement para renderizar conteudo`() {
-        // proxy positivo: garante que houve esforco explicito de escape estrutural
+    fun `js usa textContent ou createElement para renderizar conteúdo`() {
+        // proxy positivo: garante que houve esforço explícito de escape estrutural
         js.shouldContain("textContent")
         js.shouldContain("createElement")
     }
 
     @Test
-    fun `css mantem paleta laranja e cyan da home publica`() {
+    fun `css mantém paleta laranja e cyan da home pública`() {
         css.shouldContain("#FF6B2C")
         css.shouldContain("#22D3EE")
         css.shouldContain("#05070D")
     }
 
     @Test
-    fun `html anuncia demo controlada e nao indexa em buscadores`() {
+    fun `html anuncia demo controlada e não indexa em buscadores`() {
         html.shouldContain("noindex")
         html.shouldContain("demo controlada")
     }
 
     @Test
-    fun `html declara aria live para regions com atualizacao dinamica`() {
-        // acessibilidade basica: leitores de tela precisam ser avisados.
+    fun `html declara aria live para regions com atualização dinâmica`() {
+        // acessibilidade básica: leitores de tela precisam ser avisados.
         html.contains("aria-live").shouldBeTrue()
     }
 
     @Test
-    fun `painel de demonstracoes de defesa expoe os 6 cenarios prometidos`() {
+    fun `painel de demonstrações de defesa expõe os 6 cenários prometidos`() {
         val demos = listOf("rate-limit", "idor", "tampered-jwt", "alg-none", "sqli", "mass-assignment")
         demos.forEach { html.shouldContain("data-demo=\"$it\"") }
         demos.forEach { js.shouldContain("'$it'") }
@@ -110,9 +110,9 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `decodeJwt nao usa escape deprecada e tem padding base64`() {
-        // C1: substituida a chamada `decodeURIComponent(escape(...))` (deprecada e
-        // fragil com unicode) por TextDecoder + Uint8Array com padding base64url.
+    fun `decodeJwt não usa escape deprecada e tem padding base64`() {
+        // C1: substituída a chamada `decodeURIComponent(escape(...))` (deprecada e
+        // frágil com unicode) por TextDecoder + Uint8Array com padding base64url.
         Regex("escape\\s*\\(").containsMatchIn(js).shouldBeFalse()
         js.shouldContain("TextDecoder")
         // padding base64url e sinal de robustez: '='.repeat((4 - x.length % 4) % 4)
@@ -121,21 +121,21 @@ class PlaygroundFrontendTest {
 
     @Test
     fun `demo rate-limit dispara 120 requests para garantir o estouro`() {
-        // C2: card promete ~120, codigo precisa cumprir.
+        // C2: card promete ~120, código precisa cumprir.
         Regex("length:\\s*120").containsMatchIn(js).shouldBeTrue()
         html.shouldContain("limite típico 100/min")
     }
 
     @Test
-    fun `demo idor usa crypto randomUUID em vez de string aleatoria`() {
-        // C3: UUID v4 valido afasta a hipotese de 400 por input invalido.
+    fun `demo idor usa crypto randomUUID em vez de string aleatória`() {
+        // C3: UUID v4 válido afasta a hipótese de 400 por input inválido.
         js.shouldContain("crypto.randomUUID()")
     }
 
     @Test
-    fun `detectDefenseTrigger nao dispara para 400 nem 401`() {
-        // C7: validacao trivial (400) e login errado (401) sao UX, nao defesa.
-        // Verifica que o switch da funcao nao mapeia mais esses status para flashDefense.
+    fun `detectDefenseTrigger não dispara para 400 nem 401`() {
+        // C7: validação trivial (400) e login errado (401) são UX, não defesa.
+        // Verifica que o switch da função não mapeia mais esses status para flashDefense.
         val funcao =
             Regex("function detectDefenseTrigger[\\s\\S]+?\n  \\}", RegexOption.MULTILINE)
                 .find(js)
@@ -169,14 +169,14 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `metricas aceitam count e total e avisam formato inesperado`() {
+    fun `métricas aceitam count e total e avisam formato inesperado`() {
         js.shouldContain("http_server_requests_seconds_(?:count|total)")
-        js.shouldContain("metricas presentes mas formato inesperado")
+        js.shouldContain("métricas presentes mas formato inesperado")
         js.shouldContain("console.debug('[playground] prometheus raw sample'")
     }
 
     @Test
-    fun `polling de metricas e cancelado ao sair da aba`() {
+    fun `polling de métricas é cancelado ao sair da aba`() {
         js.shouldContain("if (name !== 'metricas' && metricsTimer)")
         js.shouldContain("clearTimeout(metricsTimer)")
         js.shouldContain("if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000)")
@@ -184,7 +184,7 @@ class PlaygroundFrontendTest {
 
     @Test
     fun `brand-sub usa code para aproveitar regra visual sem css morto`() {
-        html.shouldContain("<code>memoria</code>")
+        html.shouldContain("<code>memória</code>")
         html.shouldContain("<code>sandbox</code>")
         css.shouldContain(".brand-sub code")
     }
@@ -207,9 +207,9 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `exclusao usa desfazer antes de chamar delete`() {
+    fun `exclusão usa desfazer antes de chamar delete`() {
         js.shouldContain("pendingDeleteTimers")
-        js.shouldContain("exclusao agendada por 8s")
+        js.shouldContain("exclusão agendada por 8s")
         js.shouldContain("actionLabel: 'Desfazer'")
         js.shouldContain("setTimeout(async () =>")
     }
@@ -229,12 +229,12 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `mobile mostra painel lateral depois do conteudo principal`() {
+    fun `mobile mostra painel lateral depois do conteúdo principal`() {
         css.shouldContain(".right { order: 2; }")
     }
 
     @Test
-    fun `onda cinco adiciona i18n leve sem storage de token ou preferencia`() {
+    fun `onda cinco adiciona i18n leve sem storage de token ou preferência`() {
         js.shouldContain("const i18n =")
         js.shouldContain("'pt-BR'")
         js.shouldContain("'en-US'")
@@ -261,7 +261,7 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `onda cinco adiciona sparkline de latencia p95`() {
+    fun `onda cinco adiciona sparkline de latência p95`() {
         html.shouldContain("id=\"latency-sparkline\"")
         js.shouldContain("const latencyHistory = []")
         js.shouldContain("function pushLatencySample")
@@ -282,7 +282,7 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `tabs tem semantica completa e navegacao por teclado`() {
+    fun `tabs tem semântica completa e navegação por teclado`() {
         html.shouldContain("role=\"tablist\"")
         html.shouldContain("role=\"tab\"")
         html.shouldContain("role=\"tabpanel\"")

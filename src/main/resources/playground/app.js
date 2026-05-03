@@ -2,8 +2,8 @@
   'use strict';
 
   // ============================================================
-  // STATE: tokens vivem somente em variaveis no closure desta IIFE.
-  // Nao usamos localStorage nem sessionStorage — narrativa de seguranca consistente.
+  // STATE: tokens vivem somente em variáveis no closure desta IIFE.
+  // Não usamos localStorage nem sessionStorage — narrativa de segurança consistente.
   // ============================================================
   let accessToken = null;
   let refreshToken = null;
@@ -27,11 +27,11 @@
   const i18n = {
     'pt-BR': {
       'lang.toggle': 'EN',
-      'auth.title': 'Autenticacao',
+      'auth.title': 'Autenticação',
       'task.title': 'Tarefas',
       'task.hint': 'CRUD completo via JWT',
       'task.search': 'Buscar tarefa',
-      'task.search.placeholder': 'titulo, descricao, categoria ou status',
+      'task.search.placeholder': 'título, descrição, categoria ou status',
       'task.create': 'Criar tarefa',
       'tasks.empty.title': 'Seu quadro está limpo',
       'tasks.empty.body': 'Crie a primeira tarefa para ver o fluxo completo de API, auditoria e métricas acontecendo ao vivo.',
@@ -39,7 +39,7 @@
       'tabs.tasks': 'Tarefas',
       'tabs.categories': 'Categorias',
       'tabs.audit': 'Auditoria',
-      'tabs.metrics': 'Metricas',
+      'tabs.metrics': 'Métricas',
       'health.pending': 'health: --',
       'health.up': 'health: UP',
       'health.warn': 'health: degradado',
@@ -169,8 +169,8 @@
 
   // ============================================================
   // JWT decode (somente para exibir exp/sub/roles — quem valida e o servidor).
-  // base64url -> bytes -> UTF-8 -> JSON. Sem a funcao deprecada de URI legacy,
-  // usando TextDecoder e padding explicito para tolerar JWTs sem `=` no final (RFC 7515).
+  // base64url -> bytes -> UTF-8 -> JSON. Sem a função deprecada de URI legacy,
+  // usando TextDecoder e padding explícito para tolerar JWTs sem `=` no final (RFC 7515).
   // ============================================================
   function decodeJwt(token) {
     try {
@@ -288,8 +288,8 @@
   }
 
   function detectDefenseTrigger(response, status) {
-    // C7: dispara apenas para status que indicam camada de seguranca ATIVA.
-    // 401 (token invalido) e 400 (validacao) sao UX normal e nao devem poluir a faixa.
+    // C7: dispara apenas para status que indicam camada de segurança ATIVA.
+    // 401 (token inválido) e 400 (validação) são UX normal e não devem poluir a faixa.
     if (status === 429) flashDefense('rate-limit');
     else if (status === 403) flashDefense('rbac/idor');
     else if (status === 413) flashDefense('payload-too-large');
@@ -313,7 +313,7 @@
   function flashDefense(name) {
     defenseStats.lastTriggered = name;
     const pill = $('#pill-defense');
-    pill.textContent = `ultima defesa: ${name}`;
+    pill.textContent = `última defesa: ${name}`;
     pill.classList.remove('flash');
     void pill.offsetWidth; // reflow
     pill.classList.add('flash');
@@ -330,7 +330,7 @@
       $('#pill-jwt').textContent = 'jwt: --';
     }
     if (defenseStats.lastTriggered) {
-      $('#pill-defense').textContent = `ultima defesa: ${defenseStats.lastTriggered}`;
+      $('#pill-defense').textContent = `última defesa: ${defenseStats.lastTriggered}`;
     }
   }
 
@@ -560,8 +560,8 @@
 
   async function alterarStatus(id, status) {
     try {
-      // Contrato atual do backend: alterar status e um comando de dominio,
-      // exposto como POST /status/{status} e validado pela maquina de estados.
+      // Contrato atual do backend: alterar status é um comando de domínio,
+      // exposto como POST /status/{status} e validado pela máquina de estados.
       await api('POST', `/api/v1/tarefas/${id}/status/${status}`);
       toast(`status alterado para ${status}`, 'ok');
       loadTarefas();
@@ -585,7 +585,7 @@
     }, 8000);
     pendingDeleteTimers.set(id, timer);
     renderTarefas();
-    toast('exclusao agendada por 8s', 'ok', {
+    toast('exclusão agendada por 8s', 'ok', {
       durationMs: 8000,
       actionLabel: 'Desfazer',
       onAction: () => {
@@ -593,7 +593,7 @@
         if (pending) clearTimeout(pending);
         pendingDeleteTimers.delete(id);
         renderTarefas();
-        toast('exclusao cancelada', 'ok');
+        toast('exclusão cancelada', 'ok');
       },
     });
   }
@@ -679,7 +679,7 @@
         toast('tarefa criada', 'ok');
         form.reset();
         loadTarefas();
-      } catch (err) { toast(`criacao falhou: ${err.message}`, 'err'); }
+      } catch (err) { toast(`criação falhou: ${err.message}`, 'err'); }
     });
   });
 
@@ -700,7 +700,7 @@
         toast('tarefa atualizada', 'ok');
         $('#edit-dialog').close();
         loadTarefas();
-      } catch (err) { toast(`atualizacao falhou: ${err.message}`, 'err'); }
+      } catch (err) { toast(`atualização falhou: ${err.message}`, 'err'); }
     });
   });
 
@@ -770,13 +770,13 @@
   let metricsRawLogged = false;
   async function refreshMetrics() {
     if (!accessToken) {
-      $('#metrics-hint').textContent = 'faca login primeiro.';
+      $('#metrics-hint').textContent = 'faça login primeiro.';
       return;
     }
     try {
       const r = await fetch('/actuator/prometheus', { headers: { Authorization: `Bearer ${accessToken}` } });
       if (r.status === 403) {
-        $('#metrics-hint').textContent = 'usuario sem ROLE_ADMIN — Prometheus exige privilegio.';
+        $('#metrics-hint').textContent = 'usuário sem ROLE_ADMIN — Prometheus exige privilégio.';
         return;
       }
       if (!r.ok) {
@@ -797,11 +797,11 @@
       if (p95Ms != null) pushLatencySample(p95Ms);
       $('#metrics-hint').textContent = summary.formatMatched
         ? 'snapshot capturado de /actuator/prometheus'
-        : 'metricas presentes mas formato inesperado — abra DevTools';
+        : 'métricas presentes mas formato inesperado — abra DevTools';
       if (metricsTimer) clearTimeout(metricsTimer);
       if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000);
     } catch (err) {
-      $('#metrics-hint').textContent = `metricas indisponiveis: ${err.message}`;
+      $('#metrics-hint').textContent = `métricas indisponíveis: ${err.message}`;
     }
   }
 
@@ -873,7 +873,7 @@
     try {
       await navigator.clipboard.writeText(curl);
       toast('curl copiado (token mascarado)', 'ok');
-    } catch (_) { toast('clipboard indisponivel', 'err'); }
+    } catch (_) { toast('clipboard indisponível', 'err'); }
   });
 
   $('#repeat-req').addEventListener('click', () => {
@@ -883,15 +883,15 @@
   });
 
   // ============================================================
-  // DEFENSE DEMOS — botoes que atacam a API e mostram veredito ao vivo
+  // DEFENSE DEMOS — botões que atacam a API e mostram veredito ao vivo
   // ============================================================
   const demos = {
     'rate-limit': {
       requireAuth: false,
       run: async () => {
         // C2: dispara 120 requests em paralelo contra /auth/login com credenciais
-        // invalidas — payload idempotente, seguro de repetir. Limite por IP e 5/min,
-        // entao o 429 deve vir cedo.
+        // inválidas — payload idempotente, seguro de repetir. Limite por IP e 5/min,
+        // então o 429 deve vir cedo.
         const target = '/api/v1/auth/login';
         const promises = Array.from({ length: 120 }, () =>
           fetch(target, {
@@ -908,16 +908,16 @@
           ok: got429,
           summary: got429
             ? `${results.length} requests · primeiro 429 em #${firstBlocked + 1} · status vistos: ${[...new Set(results)].sort().join(', ')}`
-            : `${results.length} requests sem 429 — defesa NAO acionou`,
-          expected: '429 com Retry-After (limite tipico 5/min para login, 100/min autenticado)',
+            : `${results.length} requests sem 429 — defesa NÃO acionou`,
+          expected: '429 com Retry-After (limite típico 5/min para login, 100/min autenticado)',
         };
       },
     },
     'idor': {
       requireAuth: true,
       run: async () => {
-        // C3: usa crypto.randomUUID() — gera UUID v4 valido e bem formado.
-        // Se a API retornar 400 aqui, e UUID malformado, NAO defesa IDOR.
+        // C3: usa crypto.randomUUID() — gera UUID v4 válido e bem formado.
+        // Se a API retornar 400 aqui, é UUID malformado, NÃO defesa IDOR.
         const randomUuid = crypto.randomUUID();
         const url = `/api/v1/tarefas/${randomUuid}`;
         const r = await fetch(url, {
@@ -932,9 +932,9 @@
         return {
           ok,
           summary: ok
-            ? `status ${r.status} — preferencia 404 para nao revelar existencia`
-            : `status ${r.status} — esperado 404/403 (UUID v4 valido afasta hipotese de input invalido)`,
-          expected: '404 ou 403, NUNCA 400 (UUID e v4 valido)',
+            ? `status ${r.status} — preferência 404 para não revelar existência`
+            : `status ${r.status} — esperado 404/403 (UUID v4 válido afasta hipótese de input inválido)`,
+          expected: '404 ou 403, NUNCA 400 (UUID é v4 válido)',
         };
       },
     },
@@ -951,7 +951,7 @@
         });
         return {
           ok: r.status === 401,
-          summary: `status ${r.status} (assinatura invalida rejeitada)`,
+          summary: `status ${r.status} (assinatura inválida rejeitada)`,
           expected: '401',
         };
       },
@@ -984,8 +984,8 @@
       requireAuth: true,
       run: async () => {
         // C4: cursor injection. O endpoint /api/v1/tarefas decodifica `cursor` via
-        // CursorCodec antes de qualquer query, entao o vetor SQL real esta em
-        // PARAMETRIZACAO de Spring Data JPA. Para honestamente comprovar a defesa,
+        // CursorCodec antes de qualquer query, então o vetor SQL real está em
+        // PARAMETRIZAÇÃO de Spring Data JPA. Para honestamente comprovar a defesa,
         // (1) snapshot, (2) ataque, (3) verifica que a tabela continua respondendo
         // e ainda lista tarefas — DROP TABLE teria derrubado tudo.
         const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' };
@@ -1011,7 +1011,7 @@
         return {
           ok,
           summary: ok
-            ? `status ${r.status} · tabela intacta apos ataque (parametrizacao + cursor decodificado)`
+            ? `status ${r.status} · tabela intacta após ataque (parametrização + cursor decodificado)`
             : `status ${r.status} · tabela ${tableIntact ? 'intacta' : 'COMPROMETIDA'} — investigar`,
           expected: '400 (cursor opaco rejeitado) ou 200 (ignorado) — em ambos, tabela permanece',
         };
@@ -1020,13 +1020,13 @@
     'mass-assignment': {
       requireAuth: true,
       run: async () => {
-        // C5: duas defesas validas, ambas marcam OK:
-        //   A) Jackson com failOnUnknownProperties → 400 (camada de serializacao).
-        //   B) DTO sem ownerId → 201, e a tarefa criada pertence ao usuario autenticado
+        // C5: duas defesas válidas, ambas marcam OK:
+        //   A) Jackson com failOnUnknownProperties → 400 (camada de serialização).
+        //   B) DTO sem ownerId → 201, e a tarefa criada pertence ao usuário autenticado
         //      (proxy: GET /tarefas/{id} retorna 200 para o owner).
         const cat = categorias[0];
         if (!cat) {
-          return { ok: false, summary: 'sem categoria carregada — autentique e abra a aba Categorias antes', expected: 'autenticacao + categorias carregadas' };
+          return { ok: false, summary: 'sem categoria carregada — autentique e abra a aba Categorias antes', expected: 'autenticação + categorias carregadas' };
         }
 
         const injectedOwner = '00000000-0000-0000-0000-000000000000';
@@ -1054,8 +1054,8 @@
         if (created.status === 400) {
           return {
             ok: true,
-            summary: '400 — Jackson rejeita unknown properties (defesa por serializacao)',
-            expected: '400 (reject) ou 201 (ignored) — campos extras nao podem alterar dominio',
+            summary: '400 — Jackson rejeita unknown properties (defesa por serialização)',
+            expected: '400 (reject) ou 201 (ignored) — campos extras não podem alterar domínio',
           };
         }
 
@@ -1067,9 +1067,9 @@
           };
         }
 
-        // Defesa B: aceitou criar, mas tarefa pertence ao usuario autenticado.
-        // TarefaResponse intencionalmente nao expoe ownerId (anti info-leak),
-        // entao usamos 200 em GET como prova de propriedade.
+        // Defesa B: aceitou criar, mas tarefa pertence ao usuário autenticado.
+        // TarefaResponse intencionalmente não expõe ownerId (anti info-leak),
+        // então usamos 200 em GET como prova de propriedade.
         let persisted = null;
         try { persisted = JSON.parse(createdText); } catch (_) {}
         if (!persisted?.id) {
@@ -1082,9 +1082,9 @@
         return {
           ok,
           summary: ok
-            ? '201 — tarefa pertence ao usuario autenticado (ownerId injetado foi ignorado)'
-            : `ALERTA: tarefa criada mas inacessivel ao usuario (status ${fetched.status})`,
-          expected: '201 com tarefa pertencendo ao usuario autenticado, nao ao ownerId injetado',
+            ? '201 — tarefa pertence ao usuário autenticado (ownerId injetado foi ignorado)'
+            : `ALERTA: tarefa criada mas inacessível ao usuário (status ${fetched.status})`,
+          expected: '201 com tarefa pertencendo ao usuário autenticado, não ao ownerId injetado',
         };
       },
     },
@@ -1103,7 +1103,7 @@
     const demo = demos[name];
     if (!demo) return;
     if (demo.requireAuth && !accessToken) {
-      toast('faca login antes de provocar essa defesa', 'err');
+      toast('faça login antes de provocar essa defesa', 'err');
       return;
     }
     const verdict = $(`[data-verdict="${name}"]`);
@@ -1114,7 +1114,7 @@
       const result = await demo.run();
       verdict.className = `demo-verdict ${result.ok ? 'ok' : 'fail'}`;
       verdict.textContent = result.ok ? `OK · ${result.summary}` : `FALHOU · ${result.summary}`;
-      toast(result.ok ? `${name}: defesa segurou` : `${name}: defesa NAO segurou — esperado ${result.expected}`, result.ok ? 'ok' : 'err');
+      toast(result.ok ? `${name}: defesa segurou` : `${name}: defesa NÃO segurou — esperado ${result.expected}`, result.ok ? 'ok' : 'err');
     } catch (err) {
       verdict.className = 'demo-verdict fail';
       verdict.textContent = `erro: ${err.message}`;
