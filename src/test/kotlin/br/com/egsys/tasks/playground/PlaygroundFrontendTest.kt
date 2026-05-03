@@ -97,4 +97,49 @@ class PlaygroundFrontendTest {
         js.shouldContain("attackDemosEnabled")
         html.shouldContain("Demonstrações ofensivas disponíveis apenas em ambiente controlado.")
     }
+
+    @Test
+    fun `decodeJwt nao usa escape deprecada e tem padding base64`() {
+        // C1: substituida a chamada `decodeURIComponent(escape(...))` (deprecada e
+        // fragil com unicode) por TextDecoder + Uint8Array com padding base64url.
+        Regex("escape\\s*\\(").containsMatchIn(js).shouldBeFalse()
+        js.shouldContain("TextDecoder")
+        // padding base64url e sinal de robustez: '='.repeat((4 - x.length % 4) % 4)
+        js.shouldContain("'='.repeat")
+    }
+
+    @Test
+    fun `demo rate-limit dispara 120 requests para garantir o estouro`() {
+        // C2: card promete ~120, codigo precisa cumprir.
+        Regex("length:\\s*120").containsMatchIn(js).shouldBeTrue()
+        html.shouldContain("limite típico 100/min")
+    }
+
+    @Test
+    fun `demo idor usa crypto randomUUID em vez de string aleatoria`() {
+        // C3: UUID v4 valido afasta a hipotese de 400 por input invalido.
+        js.shouldContain("crypto.randomUUID()")
+    }
+
+    @Test
+    fun `detectDefenseTrigger nao dispara para 400 nem 401`() {
+        // C7: validacao trivial (400) e login errado (401) sao UX, nao defesa.
+        // Verifica que o switch da funcao nao mapeia mais esses status para flashDefense.
+        val funcao =
+            Regex("function detectDefenseTrigger[\\s\\S]+?\n  \\}", RegexOption.MULTILINE)
+                .find(js)
+                ?.value
+                .orEmpty()
+        funcao.shouldContain("status === 429")
+        funcao.shouldContain("status === 403")
+        Regex("status === 400").containsMatchIn(funcao).shouldBeFalse()
+        Regex("status === 401").containsMatchIn(funcao).shouldBeFalse()
+    }
+
+    @Test
+    fun `pill de rate limit tem decremento agendado via Retry-After`() {
+        // C6: ao receber Retry-After, agenda reset via setTimeout para a pill voltar a 0.
+        js.shouldContain("rateLimitResetTimer")
+        js.shouldContain("Retry-After")
+    }
 }

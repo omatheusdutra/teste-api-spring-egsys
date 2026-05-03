@@ -17,6 +17,7 @@
   const defenseStats = { rateLimit: { current: 0, max: 100 }, lastTriggered: null };
   let playgroundConfig = { attackDemosEnabled: false };
   let refreshTimer = null;
+  let rateLimitResetTimer = null;
 
   // ============================================================
   // DOM helpers (nunca usar innerHTML para dados do servidor).
@@ -81,12 +82,18 @@
 
   // ============================================================
   // JWT decode (somente para exibir exp/sub/roles — quem valida e o servidor).
+  // base64url -> bytes -> UTF-8 -> JSON. Sem a funcao deprecada de URI legacy,
+  // usando TextDecoder e padding explicito para tolerar JWTs sem `=` no final (RFC 7515).
   // ============================================================
   function decodeJwt(token) {
     try {
       const [, payload] = token.split('.');
-      const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-      return JSON.parse(decodeURIComponent(escape(json)));
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      const binary = atob(padded);
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      const json = new TextDecoder('utf-8').decode(bytes);
+      return JSON.parse(json);
     } catch (_) { return null; }
   }
 
@@ -194,15 +201,25 @@
   }
 
   function detectDefenseTrigger(response, status) {
+    // C7: dispara apenas para status que indicam camada de seguranca ATIVA.
+    // 401 (token invalido) e 400 (validacao) sao UX normal e nao devem poluir a faixa.
     if (status === 429) flashDefense('rate-limit');
     else if (status === 403) flashDefense('rbac/idor');
-    else if (status === 401) flashDefense('auth-rejected');
-    else if (status === 415) flashDefense('content-type');
     else if (status === 413) flashDefense('payload-too-large');
-    else if (status === 400) flashDefense('input-validation');
-    if (response.headers.get('Retry-After')) {
+    else if (status === 415) flashDefense('content-type');
+
+    // C6: ao receber Retry-After, marca a pill em max e agenda decremento real.
+    const retryAfter = response.headers.get('Retry-After');
+    if (retryAfter) {
       defenseStats.rateLimit.current = defenseStats.rateLimit.max;
       renderDefenseBar();
+      const seconds = Math.max(1, Number(retryAfter) || 60);
+      if (rateLimitResetTimer) clearTimeout(rateLimitResetTimer);
+      rateLimitResetTimer = setTimeout(() => {
+        defenseStats.rateLimit.current = 0;
+        rateLimitResetTimer = null;
+        renderDefenseBar();
+      }, seconds * 1000);
     }
   }
 
@@ -611,8 +628,11 @@
     'rate-limit': {
       requireAuth: false,
       run: async () => {
+        // C2: dispara 120 requests em paralelo contra /auth/login com credenciais
+        // invalidas — payload idempotente, seguro de repetir. Limite por IP e 5/min,
+        // entao o 429 deve vir cedo.
         const target = '/api/v1/auth/login';
-        const promises = Array.from({ length: 12 }, () =>
+        const promises = Array.from({ length: 120 }, () =>
           fetch(target, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -622,29 +642,38 @@
         );
         const results = await Promise.all(promises);
         const got429 = results.includes(429);
+        const firstBlocked = results.findIndex(s => s === 429);
         return {
           ok: got429,
-          summary: `${results.length} requests · status: ${[...new Set(results)].sort().join(', ')}`,
-          expected: '429 com Retry-After',
+          summary: got429
+            ? `${results.length} requests · primeiro 429 em #${firstBlocked + 1} · status vistos: ${[...new Set(results)].sort().join(', ')}`
+            : `${results.length} requests sem 429 — defesa NAO acionou`,
+          expected: '429 com Retry-After (limite tipico 5/min para login, 100/min autenticado)',
         };
       },
     },
     'idor': {
       requireAuth: true,
       run: async () => {
-        const randomUuid = '00000000-0000-4000-8000-' + Math.random().toString(16).slice(2, 14).padEnd(12, '0');
-        const r = await fetch(`/api/v1/tarefas/${randomUuid}`, {
+        // C3: usa crypto.randomUUID() — gera UUID v4 valido e bem formado.
+        // Se a API retornar 400 aqui, e UUID malformado, NAO defesa IDOR.
+        const randomUuid = crypto.randomUUID();
+        const url = `/api/v1/tarefas/${randomUuid}`;
+        const r = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         });
         recordRequest({
-          method: 'GET', url: `/api/v1/tarefas/${randomUuid}`,
+          method: 'GET', url,
           headers: { Authorization: `Bearer ${accessToken}` }, body: null,
           status: r.status, latencyMs: 0, responseText: await r.text(),
         });
+        const ok = r.status === 404 || r.status === 403;
         return {
-          ok: r.status === 404 || r.status === 403,
-          summary: `status ${r.status} (preferencia 404 para nao revelar existencia)`,
-          expected: '404 ou 403',
+          ok,
+          summary: ok
+            ? `status ${r.status} — preferencia 404 para nao revelar existencia`
+            : `status ${r.status} — esperado 404/403 (UUID v4 valido afasta hipotese de input invalido)`,
+          expected: '404 ou 403, NUNCA 400 (UUID e v4 valido)',
         };
       },
     },
@@ -693,48 +722,108 @@
     'sqli': {
       requireAuth: true,
       run: async () => {
+        // C4: cursor injection. O endpoint /api/v1/tarefas decodifica `cursor` via
+        // CursorCodec antes de qualquer query, entao o vetor SQL real esta em
+        // PARAMETRIZACAO de Spring Data JPA. Para honestamente comprovar a defesa,
+        // (1) snapshot, (2) ataque, (3) verifica que a tabela continua respondendo
+        // e ainda lista tarefas — DROP TABLE teria derrubado tudo.
+        const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' };
+
+        const pre = await fetch('/api/v1/tarefas?limit=1', { headers });
+        if (!pre.ok) {
+          return { ok: false, summary: `pre-check falhou (${pre.status}) — abortando`, expected: 'API responsiva antes do ataque' };
+        }
+
         const payload = encodeURIComponent("'; DROP TABLE tarefas; --");
         const url = `/api/v1/tarefas?cursor=${payload}&limit=10`;
-        const r = await fetch(url, {
-          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        });
+        const r = await fetch(url, { headers });
         recordRequest({
           method: 'GET', url, headers: { Authorization: `Bearer ${accessToken}` },
           body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
         });
+
+        const post = await fetch('/api/v1/tarefas?limit=1', { headers });
+        const tableIntact = post.ok;
+
+        const cursorHandledSafely = r.status === 400 || r.ok;
+        const ok = tableIntact && cursorHandledSafely;
         return {
-          ok: r.status === 400 || r.status === 200,
-          summary: `status ${r.status} · cursor opaco rejeitado ou tratado como string`,
-          expected: '400 ou 200 sem dano (consultas usam parametros nomeados)',
+          ok,
+          summary: ok
+            ? `status ${r.status} · tabela intacta apos ataque (parametrizacao + cursor decodificado)`
+            : `status ${r.status} · tabela ${tableIntact ? 'intacta' : 'COMPROMETIDA'} — investigar`,
+          expected: '400 (cursor opaco rejeitado) ou 200 (ignorado) — em ambos, tabela permanece',
         };
       },
     },
     'mass-assignment': {
       requireAuth: true,
       run: async () => {
+        // C5: duas defesas validas, ambas marcam OK:
+        //   A) Jackson com failOnUnknownProperties → 400 (camada de serializacao).
+        //   B) DTO sem ownerId → 201, e a tarefa criada pertence ao usuario autenticado
+        //      (proxy: GET /tarefas/{id} retorna 200 para o owner).
         const cat = categorias[0];
-        if (!cat) return { ok: false, summary: 'sem categoria carregada', expected: 'precisa autenticar primeiro' };
+        if (!cat) {
+          return { ok: false, summary: 'sem categoria carregada — autentique e abra a aba Categorias antes', expected: 'autenticacao + categorias carregadas' };
+        }
+
+        const injectedOwner = '00000000-0000-0000-0000-000000000000';
         const body = {
           titulo: 'tentativa de mass assignment',
-          descricao: 'payload tenta injetar ownerId',
+          descricao: 'payload tenta injetar ownerId e role',
           categoriaId: cat.id,
           dataHora: new Date(Date.now() + 86400000).toISOString(),
-          ownerId: '00000000-0000-0000-0000-000000000000',
+          ownerId: injectedOwner,
           role: 'ADMIN',
         };
-        const r = await fetch('/api/v1/tarefas', {
+        const created = await fetch('/api/v1/tarefas', {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(body),
         });
+        const createdText = await created.text();
         recordRequest({
           method: 'POST', url: '/api/v1/tarefas',
-          headers: { Authorization: `Bearer ${accessToken}` }, body, status: r.status, latencyMs: 0, responseText: await r.text(),
+          headers: { Authorization: `Bearer ${accessToken}` }, body,
+          status: created.status, latencyMs: 0, responseText: createdText,
         });
+
+        // Defesa A: Jackson rejeita os campos extras (failOnUnknownProperties)
+        if (created.status === 400) {
+          return {
+            ok: true,
+            summary: '400 — Jackson rejeita unknown properties (defesa por serializacao)',
+            expected: '400 (reject) ou 201 (ignored) — campos extras nao podem alterar dominio',
+          };
+        }
+
+        if (created.status !== 201) {
+          return {
+            ok: false,
+            summary: `status inesperado ${created.status} — esperado 400 ou 201`,
+            expected: '400 (reject) ou 201 (ignored)',
+          };
+        }
+
+        // Defesa B: aceitou criar, mas tarefa pertence ao usuario autenticado.
+        // TarefaResponse intencionalmente nao expoe ownerId (anti info-leak),
+        // entao usamos 200 em GET como prova de propriedade.
+        let persisted = null;
+        try { persisted = JSON.parse(createdText); } catch (_) {}
+        if (!persisted?.id) {
+          return { ok: false, summary: '201 mas sem id na resposta — investigar', expected: 'id na resposta' };
+        }
+        const fetched = await fetch(`/api/v1/tarefas/${persisted.id}`, {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        });
+        const ok = fetched.ok;
         return {
-          ok: r.status === 400,
-          summary: `status ${r.status} (Jackson rejeita unknown properties)`,
-          expected: '400 — DTO ignora campos extras com fail-on-unknown',
+          ok,
+          summary: ok
+            ? '201 — tarefa pertence ao usuario autenticado (ownerId injetado foi ignorado)'
+            : `ALERTA: tarefa criada mas inacessivel ao usuario (status ${fetched.status})`,
+          expected: '201 com tarefa pertencendo ao usuario autenticado, nao ao ownerId injetado',
         };
       },
     },
