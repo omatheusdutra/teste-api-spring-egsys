@@ -222,9 +222,9 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `logo do playground linka para linkedin da egsys`() {
-        html.shouldContain("https://br.linkedin.com/company/egsys")
-        html.shouldContain("rel=\"noopener\"")
+    fun `logo do playground volta para home publica`() {
+        html.shouldContain("href=\"/\"")
+        html.shouldContain("aria-label=\"Voltar para a home\"")
         html.shouldContain("class=\"brand-link\"")
     }
 
