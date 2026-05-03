@@ -16,7 +16,9 @@
 
 <header class="topbar">
   <div class="brand">
-    <img src="/egsys-logo.svg" alt="EGSYS" class="brand-logo">
+    <a class="brand-link" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">
+      <img src="/egsys-logo.svg" alt="EGSYS" class="brand-logo">
+    </a>
     <div>
       <div class="brand-title">Tasks API · Playground</div>
       <div class="brand-sub">demo controlada · tokens em <code>memoria</code> · ataques apenas em <code>sandbox</code></div>
@@ -60,6 +62,9 @@
         <h2>Provoque uma defesa</h2>
         <span class="hint">cada botao ataca a propria API e mostra se a defesa segurou</span>
       </header>
+      <p class="sandbox-banner">
+        🧪 Sandbox controlado — todos os ataques são contra a própria API local. Nenhum dado real é afetado. Use à vontade.
+      </p>
       <p id="defense-demos-disabled" class="demo-disabled-message" hidden>
         Demonstrações ofensivas disponíveis apenas em ambiente controlado.
       </p>
@@ -214,6 +219,17 @@
     <div class="dialog-actions">
       <button class="btn btn-ghost" value="cancel" formmethod="dialog">Cancelar</button>
       <button class="btn btn-primary" id="edit-save" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirm-dialog" class="confirm-dialog">
+  <form method="dialog">
+    <h3 id="confirm-title">Confirmar ação</h3>
+    <p id="confirm-message" class="hint"></p>
+    <div class="dialog-actions">
+      <button id="confirm-cancel" class="btn btn-ghost" value="cancel" type="submit">Cancelar</button>
+      <button id="confirm-ok" class="btn btn-primary" value="ok" type="submit">Confirmar</button>
     </div>
   </form>
 </dialog>

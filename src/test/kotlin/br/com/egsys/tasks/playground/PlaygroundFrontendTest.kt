@@ -63,6 +63,13 @@ class PlaygroundFrontendTest {
     }
 
     @Test
+    fun `js nao usa confirm nativo do navegador`() {
+        Regex("(?<!function )\\bconfirm\\s*\\(").containsMatchIn(js).shouldBeFalse()
+        html.shouldContain("id=\"confirm-dialog\"")
+        js.shouldContain("function confirmAction")
+    }
+
+    @Test
     fun `js usa textContent ou createElement para renderizar conteudo`() {
         // proxy positivo: garante que houve esforco explicito de escape estrutural
         js.shouldContain("textContent")
@@ -180,5 +187,49 @@ class PlaygroundFrontendTest {
         html.shouldContain("<code>memoria</code>")
         html.shouldContain("<code>sandbox</code>")
         css.shouldContain(".brand-sub code")
+    }
+
+    @Test
+    fun `onda quatro adiciona skeleton loaders e loading state`() {
+        js.shouldContain("function renderSkeletonRows")
+        js.shouldContain("class: 'skeleton-row'")
+        css.shouldContain(".skeleton-row")
+        js.shouldContain("async function withLoadingState")
+        css.shouldContain(".btn-loading")
+    }
+
+    @Test
+    fun `empty state de tarefas tem svg e cta seguro`() {
+        js.shouldContain("function renderEmptyTasksState")
+        js.shouldContain("document.createElementNS('http://www.w3.org/2000/svg', 'svg')")
+        js.shouldContain("Criar primeira tarefa")
+        css.shouldContain(".empty-state")
+    }
+
+    @Test
+    fun `exclusao usa desfazer antes de chamar delete`() {
+        js.shouldContain("pendingDeleteTimers")
+        js.shouldContain("exclusao agendada por 8s")
+        js.shouldContain("actionLabel: 'Desfazer'")
+        js.shouldContain("setTimeout(async () =>")
+    }
+
+    @Test
+    fun `painel de defesa mostra aviso sandbox controlado`() {
+        html.shouldContain("Sandbox controlado")
+        html.shouldContain("Nenhum dado real é afetado")
+        css.shouldContain(".sandbox-banner")
+    }
+
+    @Test
+    fun `logo do playground linka para linkedin da egsys`() {
+        html.shouldContain("https://br.linkedin.com/company/egsys")
+        html.shouldContain("rel=\"noopener\"")
+        html.shouldContain("class=\"brand-link\"")
+    }
+
+    @Test
+    fun `mobile mostra painel lateral depois do conteudo principal`() {
+        css.shouldContain(".right { order: 2; }")
     }
 }

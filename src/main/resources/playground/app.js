@@ -18,6 +18,7 @@
   let playgroundConfig = { attackDemosEnabled: false };
   let refreshTimer = null;
   let rateLimitResetTimer = null;
+  const pendingDeleteTimers = new Map();
 
   // ============================================================
   // DOM helpers (nunca usar innerHTML para dados do servidor).
@@ -41,11 +42,46 @@
     return node;
   }
 
-  function toast(msg, kind = 'ok') {
+  function toast(msg, kind = 'ok', opts = {}) {
     const host = $('#toast-host');
-    const t = el('div', { class: `toast ${kind}` }, [msg]);
+    const children = [msg];
+    if (opts.actionLabel && typeof opts.onAction === 'function') {
+      children.push(el('button', { class: 'toast-action', type: 'button', onclick: opts.onAction }, [opts.actionLabel]));
+    }
+    const t = el('div', { class: `toast ${kind}` }, children);
     host.append(t);
-    setTimeout(() => t.remove(), 3500);
+    setTimeout(() => t.remove(), opts.durationMs || 3500);
+    return t;
+  }
+
+  async function withLoadingState(button, task) {
+    if (!button) return task();
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.classList.add('btn-loading');
+    button.textContent = '...';
+    try {
+      return await task();
+    } finally {
+      button.textContent = originalText;
+      button.classList.remove('btn-loading');
+      button.disabled = false;
+    }
+  }
+
+  function confirmAction(message) {
+    const dlg = $('#confirm-dialog');
+    if (!dlg) return Promise.resolve(false);
+    $('#confirm-message').textContent = message;
+    dlg.returnValue = '';
+    return new Promise(resolve => {
+      const onClose = () => {
+        dlg.removeEventListener('close', onClose);
+        resolve(dlg.returnValue === 'ok');
+      };
+      dlg.addEventListener('close', onClose);
+      dlg.showModal();
+    });
   }
 
   function attackDemosUnavailableMessage() {
@@ -328,8 +364,13 @@
   // ============================================================
   // CRUD: Categorias e Tarefas
   // ============================================================
+  function renderSkeletonRows(host, count = 3) {
+    host.replaceChildren(...Array.from({ length: count }, () => el('div', { class: 'skeleton-row', 'aria-hidden': 'true' })));
+  }
+
   async function loadCategorias() {
     if (!accessToken) return;
+    renderSkeletonRows($('#categoria-list'));
     try {
       categorias = await api('GET', '/api/v1/categorias');
       populateCategoriaSelects();
@@ -362,6 +403,7 @@
 
   async function loadTarefas() {
     if (!accessToken) return;
+    renderSkeletonRows($('#tarefa-list'));
     try {
       const page = await api('GET', '/api/v1/tarefas?limit=100');
       tarefas = page.items || [];
@@ -373,11 +415,12 @@
 
   function renderTarefas() {
     const host = $('#tarefa-list');
-    if (tarefas.length === 0) {
-      host.replaceChildren(el('div', { class: 'hint' }, ['nenhuma tarefa ainda — crie uma acima']));
+    const visibleTarefas = tarefas.filter(t => !pendingDeleteTimers.has(t.id));
+    if (visibleTarefas.length === 0) {
+      host.replaceChildren(renderEmptyTasksState());
       return;
     }
-    host.replaceChildren(...tarefas.map(t => {
+    host.replaceChildren(...visibleTarefas.map(t => {
       const statusKind = t.status === 'CONCLUIDA' ? 'ok' : t.status === 'CANCELADA' ? 'err' : 'warn';
       return el('div', { class: 'task-row' }, [
         el('div', {}, [
@@ -393,12 +436,39 @@
         ]),
         el('div', { class: 'task-actions' }, [
           el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => openEdit(t) }, ['Editar']),
-          el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => alterarStatus(t.id, 'em-andamento') }, ['Em andamento']),
-          el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => alterarStatus(t.id, 'concluida') }, ['Concluir']),
-          el('button', { class: 'btn btn-danger', type: 'button', onclick: () => excluirTarefa(t.id) }, ['Excluir']),
+          el('button', { class: 'btn btn-ghost', type: 'button', onclick: ev => withLoadingState(ev.currentTarget, () => alterarStatus(t.id, 'em-andamento')) }, ['Em andamento']),
+          el('button', { class: 'btn btn-ghost', type: 'button', onclick: ev => withLoadingState(ev.currentTarget, () => alterarStatus(t.id, 'concluida')) }, ['Concluir']),
+          el('button', { class: 'btn btn-danger', type: 'button', onclick: ev => withLoadingState(ev.currentTarget, () => excluirTarefa(t.id)) }, ['Excluir']),
         ]),
       ]);
     }));
+  }
+
+  function renderEmptyTasksState() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 120 90');
+    svg.setAttribute('aria-hidden', 'true');
+    [
+      ['rect', { x: '22', y: '24', width: '76', height: '46', rx: '10', fill: 'none', stroke: 'currentColor', 'stroke-width': '4', opacity: '0.45' }],
+      ['path', { d: 'M36 42h30M36 54h18', fill: 'none', stroke: 'currentColor', 'stroke-width': '4', 'stroke-linecap': 'round', opacity: '0.7' }],
+      ['path', { d: 'M72 52l8 8 16-20', fill: 'none', stroke: '#10E098', 'stroke-width': '5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }],
+      ['circle', { cx: '27', cy: '22', r: '4', fill: 'currentColor', opacity: '0.35' }],
+      ['circle', { cx: '95', cy: '72', r: '3', fill: 'currentColor', opacity: '0.35' }],
+    ].forEach(([tag, attrs]) => {
+      const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+      svg.append(node);
+    });
+    return el('div', { class: 'empty-state' }, [
+      svg,
+      el('strong', {}, ['Seu quadro está limpo']),
+      el('p', {}, ['Crie a primeira tarefa para ver o fluxo completo de API, auditoria e métricas acontecendo ao vivo.']),
+      el('button', {
+        class: 'btn btn-primary',
+        type: 'button',
+        onclick: () => $('#tarefa-form input[name=titulo]')?.focus(),
+      }, ['Criar primeira tarefa']),
+    ]);
   }
 
   async function alterarStatus(id, status) {
@@ -414,14 +484,31 @@
   }
 
   async function excluirTarefa(id) {
-    if (!confirm('Confirmar exclusao? (soft delete)')) return;
-    try {
-      await api('DELETE', `/api/v1/tarefas/${id}`);
-      toast('tarefa excluida', 'ok');
-      loadTarefas();
-    } catch (err) {
-      toast(`falha: ${err.message}`, 'err');
-    }
+    if (pendingDeleteTimers.has(id)) return;
+    const timer = setTimeout(async () => {
+      pendingDeleteTimers.delete(id);
+      try {
+        await api('DELETE', `/api/v1/tarefas/${id}`);
+        toast('tarefa excluida com soft delete', 'ok');
+        loadTarefas();
+      } catch (err) {
+        toast(`falha: ${err.message}`, 'err');
+        renderTarefas();
+      }
+    }, 8000);
+    pendingDeleteTimers.set(id, timer);
+    renderTarefas();
+    toast('exclusao agendada por 8s', 'ok', {
+      durationMs: 8000,
+      actionLabel: 'Desfazer',
+      onAction: () => {
+        const pending = pendingDeleteTimers.get(id);
+        if (pending) clearTimeout(pending);
+        pendingDeleteTimers.delete(id);
+        renderTarefas();
+        toast('exclusao cancelada', 'ok');
+      },
+    });
   }
 
   function openEdit(t) {
@@ -450,80 +537,92 @@
   // ============================================================
   $('#register-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const form = ev.target;
-    try {
-      const resp = await api('POST', '/api/v1/auth/register', {
-        email: form.elements.email.value,
-        password: form.elements.password.value,
-      }, { auth: false });
-      setTokens(resp);
-      toast('registrado e autenticado', 'ok');
-      form.reset();
-    } catch (err) { toast(`registro falhou: ${err.message}`, 'err'); }
+    await withLoadingState(ev.submitter, async () => {
+      const form = ev.target;
+      try {
+        const resp = await api('POST', '/api/v1/auth/register', {
+          email: form.elements.email.value,
+          password: form.elements.password.value,
+        }, { auth: false });
+        setTokens(resp);
+        toast('registrado e autenticado', 'ok');
+        form.reset();
+      } catch (err) { toast(`registro falhou: ${err.message}`, 'err'); }
+    });
   });
 
   $('#login-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const form = ev.target;
-    try {
-      const resp = await api('POST', '/api/v1/auth/login', {
-        email: form.elements.email.value,
-        password: form.elements.password.value,
-      }, { auth: false });
-      setTokens(resp);
-      toast('login ok', 'ok');
-      form.reset();
-    } catch (err) { toast(`login falhou: ${err.message}`, 'err'); }
+    await withLoadingState(ev.submitter, async () => {
+      const form = ev.target;
+      try {
+        const resp = await api('POST', '/api/v1/auth/login', {
+          email: form.elements.email.value,
+          password: form.elements.password.value,
+        }, { auth: false });
+        setTokens(resp);
+        toast('login ok', 'ok');
+        form.reset();
+      } catch (err) { toast(`login falhou: ${err.message}`, 'err'); }
+    });
   });
 
-  $('#refresh-btn').addEventListener('click', autoRefresh);
-  $('#logout-btn').addEventListener('click', async () => {
+  $('#refresh-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, autoRefresh));
+  $('#logout-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, async () => {
+    if (!(await confirmAction('Revogar o JWT atual no Redis e limpar a sessão local?'))) return;
     try {
       await api('POST', '/api/v1/auth/logout');
       toast('logout (jti revogado no Redis)', 'ok');
     } catch (err) { /* segue limpando local mesmo se API falhar */ }
     clearTokens();
-  });
+  }));
 
   $('#tarefa-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const form = ev.target;
-    const body = {
-      titulo: form.elements.titulo.value.trim(),
-      descricao: form.elements.descricao.value.trim() || null,
-      categoriaId: form.elements.categoriaId.value,
-      dataHora: fromLocalDateTime(form.elements.dataHora.value),
-    };
-    try {
-      await api('POST', '/api/v1/tarefas', body);
-      toast('tarefa criada', 'ok');
-      form.reset();
-      loadTarefas();
-    } catch (err) { toast(`criacao falhou: ${err.message}`, 'err'); }
+    await withLoadingState(ev.submitter, async () => {
+      const form = ev.target;
+      const body = {
+        titulo: form.elements.titulo.value.trim(),
+        descricao: form.elements.descricao.value.trim() || null,
+        categoriaId: form.elements.categoriaId.value,
+        dataHora: fromLocalDateTime(form.elements.dataHora.value),
+      };
+      try {
+        await api('POST', '/api/v1/tarefas', body);
+        toast('tarefa criada', 'ok');
+        form.reset();
+        loadTarefas();
+      } catch (err) { toast(`criacao falhou: ${err.message}`, 'err'); }
+    });
   });
 
   $('#edit-form').addEventListener('submit', async ev => {
     if (ev.submitter && ev.submitter.value === 'cancel') return;
     ev.preventDefault();
-    const form = ev.target;
-    const id = form.elements.id.value;
-    const body = {
-      titulo: form.elements.titulo.value.trim(),
-      descricao: form.elements.descricao.value.trim() || null,
-      categoriaId: form.elements.categoriaId.value,
-      dataHora: fromLocalDateTime(form.elements.dataHora.value),
-    };
-    try {
-      await api('PUT', `/api/v1/tarefas/${id}`, body);
-      toast('tarefa atualizada', 'ok');
-      $('#edit-dialog').close();
-      loadTarefas();
-    } catch (err) { toast(`atualizacao falhou: ${err.message}`, 'err'); }
+    await withLoadingState(ev.submitter, async () => {
+      const form = ev.target;
+      const id = form.elements.id.value;
+      const body = {
+        titulo: form.elements.titulo.value.trim(),
+        descricao: form.elements.descricao.value.trim() || null,
+        categoriaId: form.elements.categoriaId.value,
+        dataHora: fromLocalDateTime(form.elements.dataHora.value),
+      };
+      try {
+        await api('PUT', `/api/v1/tarefas/${id}`, body);
+        toast('tarefa atualizada', 'ok');
+        $('#edit-dialog').close();
+        loadTarefas();
+      } catch (err) { toast(`atualizacao falhou: ${err.message}`, 'err'); }
+    });
   });
 
-  $('#reset-btn').addEventListener('click', () => {
+  $('#reset-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, async () => {
+    if (!(await confirmAction('Limpar tokens em memória, listas e auditoria da sessão?'))) return;
     clearTokens();
     tarefas = []; categorias = [];
+    pendingDeleteTimers.forEach(timer => clearTimeout(timer));
+    pendingDeleteTimers.clear();
     auditLog.length = 0;
     renderTarefas(); renderCategorias(); renderAudit();
     $('#req-method').replaceChildren(el('span', { class: 'badge badge-muted' }, ['--']), ' ', el('span', {}, ['aguardando...']));
@@ -532,7 +631,7 @@
     $('#res-meta').textContent = '--';
     $('#res-body').textContent = '--';
     toast('estado resetado', 'ok');
-  });
+  }));
 
   // ============================================================
   // TABS
