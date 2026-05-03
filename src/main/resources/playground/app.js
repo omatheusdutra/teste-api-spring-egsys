@@ -306,8 +306,11 @@
   function scheduleAutoRefresh() {
     if (refreshTimer) clearTimeout(refreshTimer);
     const remaining = accessExpiresAt - Date.now();
-    const fireIn = Math.max(5000, remaining - 60_000); // refresh com 60s de folga
-    refreshTimer = setTimeout(autoRefresh, fireIn);
+    if (remaining <= 60_000) {
+      autoRefresh();
+      return;
+    }
+    refreshTimer = setTimeout(autoRefresh, remaining - 60_000);
   }
 
   async function autoRefresh() {
@@ -400,6 +403,8 @@
 
   async function alterarStatus(id, status) {
     try {
+      // Contrato atual do backend: alterar status e um comando de dominio,
+      // exposto como POST /status/{status} e validado pela maquina de estados.
       await api('POST', `/api/v1/tarefas/${id}/status/${status}`);
       toast(`status alterado para ${status}`, 'ok');
       loadTarefas();
@@ -539,6 +544,10 @@
   function activateTab(name) {
     $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     $$('.tab-panel').forEach(p => { p.hidden = (p.id !== `tab-${name}`); });
+    if (name !== 'metricas' && metricsTimer) {
+      clearTimeout(metricsTimer);
+      metricsTimer = null;
+    }
     if (name === 'metricas') refreshMetrics();
   }
 
@@ -546,6 +555,7 @@
   // METRICS (best-effort; precisa role ADMIN para Prometheus)
   // ============================================================
   let metricsTimer = null;
+  let metricsRawLogged = false;
   async function refreshMetrics() {
     if (!accessToken) {
       $('#metrics-hint').textContent = 'faca login primeiro.';
@@ -562,14 +572,20 @@
         return;
       }
       const text = await r.text();
+      if (playgroundConfig.attackDemosEnabled && !metricsRawLogged) {
+        console.debug('[playground] prometheus raw sample', text.slice(0, 2000));
+        metricsRawLogged = true;
+      }
       const summary = parsePrometheus(text);
       $('#m-rps').textContent = summary.rps != null ? summary.rps.toFixed(1) : '--';
       $('#m-p95').textContent = summary.p95 != null ? Math.round(summary.p95 * 1000) : '--';
       $('#m-4xx').textContent = summary.count4xx;
       $('#m-5xx').textContent = summary.count5xx;
-      $('#metrics-hint').textContent = 'snapshot capturado de /actuator/prometheus';
+      $('#metrics-hint').textContent = summary.formatMatched
+        ? 'snapshot capturado de /actuator/prometheus'
+        : 'metricas presentes mas formato inesperado — abra DevTools';
       if (metricsTimer) clearTimeout(metricsTimer);
-      metricsTimer = setTimeout(refreshMetrics, 5000);
+      if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000);
     } catch (err) {
       $('#metrics-hint').textContent = `metricas indisponiveis: ${err.message}`;
     }
@@ -579,10 +595,12 @@
     const lines = text.split('\n');
     let totalCount = 0, count4xx = 0, count5xx = 0;
     let p95 = null;
+    let formatMatched = false;
     for (const line of lines) {
       if (line.startsWith('#')) continue;
-      const match = line.match(/^http_server_requests_seconds_count\{(.+?)\} ([\d.eE+-]+)/);
+      const match = line.match(/^http_server_requests_seconds_(?:count|total)\{(.+?)\} ([\d.eE+-]+)/);
       if (match) {
+        formatMatched = true;
         const labels = match[1];
         const value = Number(match[2]);
         totalCount += value;
@@ -592,9 +610,12 @@
         continue;
       }
       const p95Match = line.match(/^http_server_requests_seconds\{[^}]*quantile="0\.95"[^}]*\} ([\d.eE+-]+)/);
-      if (p95Match) p95 = Math.max(p95 || 0, Number(p95Match[1]));
+      if (p95Match) {
+        formatMatched = true;
+        p95 = Math.max(p95 || 0, Number(p95Match[1]));
+      }
     }
-    return { rps: totalCount > 0 ? totalCount / 60 : null, p95, count4xx, count5xx };
+    return { rps: totalCount > 0 ? totalCount / 60 : null, p95, count4xx, count5xx, formatMatched };
   }
 
   // ============================================================

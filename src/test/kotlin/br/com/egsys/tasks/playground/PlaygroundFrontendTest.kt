@@ -28,6 +28,10 @@ class PlaygroundFrontendTest {
         // CSP global proibe inline-script. Logo, a unica forma de carregar JS e via src=.
         val inlineScriptOpenTag = Regex("<script(?![^>]*\\bsrc=)[^>]*>[\\s\\S]+?</script>", RegexOption.IGNORE_CASE)
         inlineScriptOpenTag.containsMatchIn(html).shouldBeFalse()
+        html.shouldContain("http-equiv=\"Content-Security-Policy\"")
+        html.shouldContain("script-src 'self'")
+        html.shouldContain("style-src 'self'")
+        html.shouldContain("name=\"referrer\" content=\"no-referrer\"")
         html.shouldContain("/playground/assets/app.js")
         html.shouldContain("/playground/assets/styles.css")
     }
@@ -141,5 +145,40 @@ class PlaygroundFrontendTest {
         // C6: ao receber Retry-After, agenda reset via setTimeout para a pill voltar a 0.
         js.shouldContain("rateLimitResetTimer")
         js.shouldContain("Retry-After")
+    }
+
+    @Test
+    fun `auto refresh evita loop quente para token com ttl curto`() {
+        js.shouldContain("if (remaining <= 60_000)")
+        js.shouldContain("autoRefresh();")
+        js.shouldContain("setTimeout(autoRefresh, remaining - 60_000)")
+    }
+
+    @Test
+    fun `alterar status documenta contrato command style do backend`() {
+        js.shouldContain("Contrato atual do backend")
+        js.shouldContain("POST /status/{status}")
+        js.shouldContain("`/api/v1/tarefas/\${id}/status/\${status}`")
+    }
+
+    @Test
+    fun `metricas aceitam count e total e avisam formato inesperado`() {
+        js.shouldContain("http_server_requests_seconds_(?:count|total)")
+        js.shouldContain("metricas presentes mas formato inesperado")
+        js.shouldContain("console.debug('[playground] prometheus raw sample'")
+    }
+
+    @Test
+    fun `polling de metricas e cancelado ao sair da aba`() {
+        js.shouldContain("if (name !== 'metricas' && metricsTimer)")
+        js.shouldContain("clearTimeout(metricsTimer)")
+        js.shouldContain("if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000)")
+    }
+
+    @Test
+    fun `brand-sub usa code para aproveitar regra visual sem css morto`() {
+        html.shouldContain("<code>memoria</code>")
+        html.shouldContain("<code>sandbox</code>")
+        css.shouldContain(".brand-sub code")
     }
 }
