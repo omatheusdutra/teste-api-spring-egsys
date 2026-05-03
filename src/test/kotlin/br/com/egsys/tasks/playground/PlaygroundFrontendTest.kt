@@ -274,6 +274,8 @@ class PlaygroundFrontendTest {
         html.shouldContain("id=\"health-pill\"")
         js.shouldContain("async function refreshHealth")
         js.shouldContain("/actuator/health")
+        js.shouldContain("if (accessToken) headers.Authorization")
+        js.shouldContain("refreshHealth();")
         js.shouldContain("setTimeout(refreshHealth, 30_000)")
         css.shouldContain(".health-up")
         css.shouldContain(".health-down")

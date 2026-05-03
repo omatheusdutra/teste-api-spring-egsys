@@ -380,6 +380,7 @@
     currentUser = decodeJwt(accessToken);
     updateAuthUI();
     scheduleAutoRefresh();
+    refreshHealth();
     onAuthenticated();
   }
 
@@ -1128,7 +1129,9 @@
   async function refreshHealth() {
     const pill = $('#health-pill');
     try {
-      const response = await fetch('/actuator/health', { headers: { Accept: 'application/json' }, credentials: 'omit' });
+      const headers = { Accept: 'application/json' };
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      const response = await fetch('/actuator/health', { headers, credentials: 'omit' });
       const text = await response.text();
       let body = {};
       try { body = JSON.parse(text); } catch (_) {}

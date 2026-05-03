@@ -105,6 +105,12 @@ Garantias do frontend:
 
 Decisão arquitetural: [ADR 0009](docs/adr/0009-playground-production-demo-controlled.md).
 
+Screenshots da validação visual:
+
+- [Desktop completo](docs/screenshots/playground/desktop-playground.png)
+- [Mobile](docs/screenshots/playground/mobile-playground.png)
+- [Painel de defesas com vereditos](docs/screenshots/playground/defense-demos-verdicts.png)
+
 ## 📚 API REST v1
 
 Swagger UI: `/swagger-ui.html`
