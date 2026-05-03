@@ -232,4 +232,63 @@ class PlaygroundFrontendTest {
     fun `mobile mostra painel lateral depois do conteudo principal`() {
         css.shouldContain(".right { order: 2; }")
     }
+
+    @Test
+    fun `onda cinco adiciona i18n leve sem storage de token ou preferencia`() {
+        js.shouldContain("const i18n =")
+        js.shouldContain("'pt-BR'")
+        js.shouldContain("'en-US'")
+        js.shouldContain("function t(key)")
+        js.shouldContain("function toggleLanguage")
+        html.shouldContain("id=\"lang-toggle\"")
+    }
+
+    @Test
+    fun `onda cinco adiciona atalhos globais e dialog de ajuda`() {
+        js.shouldContain("function handleGlobalShortcuts")
+        js.shouldContain("document.addEventListener('keydown', handleGlobalShortcuts)")
+        js.shouldContain("pendingGoto === 'g'")
+        html.shouldContain("id=\"shortcuts-dialog\"")
+        html.shouldContain("<kbd>g</kbd> <kbd>t</kbd>")
+    }
+
+    @Test
+    fun `onda cinco adiciona busca client-side de tarefas`() {
+        html.shouldContain("id=\"task-search\"")
+        js.shouldContain("let taskSearch = ''")
+        js.shouldContain("$('#task-search').addEventListener('input'")
+        js.shouldContain("value.toLowerCase().includes(query)")
+    }
+
+    @Test
+    fun `onda cinco adiciona sparkline de latencia p95`() {
+        html.shouldContain("id=\"latency-sparkline\"")
+        js.shouldContain("const latencyHistory = []")
+        js.shouldContain("function pushLatencySample")
+        js.shouldContain("function renderLatencySparkline")
+        css.shouldContain(".sparkline")
+    }
+
+    @Test
+    fun `onda cinco adiciona health pill no topbar`() {
+        html.shouldContain("id=\"health-pill\"")
+        js.shouldContain("async function refreshHealth")
+        js.shouldContain("/actuator/health")
+        js.shouldContain("setTimeout(refreshHealth, 30_000)")
+        css.shouldContain(".health-up")
+        css.shouldContain(".health-down")
+    }
+
+    @Test
+    fun `tabs tem semantica completa e navegacao por teclado`() {
+        html.shouldContain("role=\"tablist\"")
+        html.shouldContain("role=\"tab\"")
+        html.shouldContain("role=\"tabpanel\"")
+        html.shouldContain("aria-controls=\"tab-tarefas\"")
+        html.shouldContain("aria-labelledby=\"tab-btn-tarefas\"")
+        js.shouldContain("function handleTabKeydown")
+        js.shouldContain("ev.key === 'ArrowRight'")
+        js.shouldContain("ev.key === 'Home'")
+        js.shouldContain("ev.key === 'End'")
+    }
 }

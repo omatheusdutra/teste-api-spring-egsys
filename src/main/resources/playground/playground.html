@@ -25,6 +25,8 @@
     </div>
   </div>
   <div class="topbar-right">
+    <button id="lang-toggle" class="btn btn-ghost compact-btn" type="button" aria-label="Alternar idioma">PT</button>
+    <span id="health-pill" class="health-pill health-unknown" title="health pendente">health: --</span>
     <span id="auth-badge" class="badge badge-muted">sem token</span>
     <button id="reset-btn" class="btn btn-ghost" type="button">Reset</button>
   </div>
@@ -108,19 +110,22 @@
       </div>
     </div>
 
-    <nav class="tabs" role="tablist">
-      <button class="tab" data-tab="tarefas" aria-selected="true">Tarefas</button>
-      <button class="tab" data-tab="categorias">Categorias</button>
-      <button class="tab" data-tab="auditoria">Auditoria</button>
-      <button class="tab" data-tab="metricas">Metricas</button>
+    <nav class="tabs" role="tablist" aria-label="Seções do playground">
+      <button id="tab-btn-tarefas" class="tab" data-tab="tarefas" role="tab" aria-controls="tab-tarefas" aria-selected="true" tabindex="0">Tarefas</button>
+      <button id="tab-btn-categorias" class="tab" data-tab="categorias" role="tab" aria-controls="tab-categorias" aria-selected="false" tabindex="-1">Categorias</button>
+      <button id="tab-btn-auditoria" class="tab" data-tab="auditoria" role="tab" aria-controls="tab-auditoria" aria-selected="false" tabindex="-1">Auditoria</button>
+      <button id="tab-btn-metricas" class="tab" data-tab="metricas" role="tab" aria-controls="tab-metricas" aria-selected="false" tabindex="-1">Metricas</button>
     </nav>
 
-    <section id="tab-tarefas" class="tab-panel">
+    <section id="tab-tarefas" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-tarefas">
       <div class="card">
         <header class="card-header">
           <h2>Tarefas</h2>
           <span class="hint">CRUD completo via JWT</span>
         </header>
+        <label class="search-label">Buscar tarefa
+          <input id="task-search" type="search" autocomplete="off" placeholder="titulo, descricao, categoria ou status">
+        </label>
         <form id="tarefa-form" class="grid-form">
           <label>Titulo <input name="titulo" maxlength="200" required></label>
           <label>Categoria
@@ -134,7 +139,7 @@
       </div>
     </section>
 
-    <section id="tab-categorias" class="tab-panel" hidden>
+    <section id="tab-categorias" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-categorias" hidden>
       <div class="card">
         <header class="card-header">
           <h2>Categorias</h2>
@@ -144,7 +149,7 @@
       </div>
     </section>
 
-    <section id="tab-auditoria" class="tab-panel" hidden>
+    <section id="tab-auditoria" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-auditoria" hidden>
       <div class="card">
         <header class="card-header">
           <h2>Auditoria da sessao</h2>
@@ -154,7 +159,7 @@
       </div>
     </section>
 
-    <section id="tab-metricas" class="tab-panel" hidden>
+    <section id="tab-metricas" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-metricas" hidden>
       <div class="card">
         <header class="card-header">
           <h2>Metricas ao vivo</h2>
@@ -166,6 +171,7 @@
           <div class="metric"><span class="metric-label">4xx total</span><span class="metric-value" id="m-4xx">--</span></div>
           <div class="metric"><span class="metric-label">5xx total</span><span class="metric-value" id="m-5xx">--</span></div>
         </div>
+        <svg id="latency-sparkline" class="sparkline" viewBox="0 0 240 48" role="img" aria-label="Historico de latencia P95"></svg>
         <p class="hint" id="metrics-hint">faca login com um usuario que tenha role <code>ADMIN</code> para ver dados.</p>
       </div>
     </section>
@@ -230,6 +236,25 @@
     <div class="dialog-actions">
       <button id="confirm-cancel" class="btn btn-ghost" value="cancel" type="submit">Cancelar</button>
       <button id="confirm-ok" class="btn btn-primary" value="ok" type="submit">Confirmar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="shortcuts-dialog" class="shortcuts-dialog">
+  <form method="dialog">
+    <h3>Atalhos</h3>
+    <dl class="shortcut-grid">
+      <dt><kbd>c</kbd></dt><dd>foca o titulo da nova tarefa</dd>
+      <dt><kbd>/</kbd></dt><dd>foca a busca de tarefas</dd>
+      <dt><kbd>?</kbd></dt><dd>abre esta ajuda</dd>
+      <dt><kbd>Esc</kbd></dt><dd>fecha dialogs abertos</dd>
+      <dt><kbd>g</kbd> <kbd>t</kbd></dt><dd>vai para Tarefas</dd>
+      <dt><kbd>g</kbd> <kbd>c</kbd></dt><dd>vai para Categorias</dd>
+      <dt><kbd>g</kbd> <kbd>a</kbd></dt><dd>vai para Auditoria</dd>
+      <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>vai para Metricas</dd>
+    </dl>
+    <div class="dialog-actions">
+      <button class="btn btn-primary" value="ok" type="submit">Fechar</button>
     </div>
   </form>
 </dialog>

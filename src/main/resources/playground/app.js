@@ -19,6 +19,57 @@
   let refreshTimer = null;
   let rateLimitResetTimer = null;
   const pendingDeleteTimers = new Map();
+  let taskSearch = '';
+  let currentLang = (navigator.language || 'pt-BR').startsWith('pt') ? 'pt-BR' : 'en-US';
+  let healthTimer = null;
+  const latencyHistory = [];
+
+  const i18n = {
+    'pt-BR': {
+      'lang.toggle': 'EN',
+      'auth.title': 'Autenticacao',
+      'task.title': 'Tarefas',
+      'task.hint': 'CRUD completo via JWT',
+      'task.search': 'Buscar tarefa',
+      'task.search.placeholder': 'titulo, descricao, categoria ou status',
+      'task.create': 'Criar tarefa',
+      'tasks.empty.title': 'Seu quadro está limpo',
+      'tasks.empty.body': 'Crie a primeira tarefa para ver o fluxo completo de API, auditoria e métricas acontecendo ao vivo.',
+      'tasks.empty.cta': 'Criar primeira tarefa',
+      'tabs.tasks': 'Tarefas',
+      'tabs.categories': 'Categorias',
+      'tabs.audit': 'Auditoria',
+      'tabs.metrics': 'Metricas',
+      'health.pending': 'health: --',
+      'health.up': 'health: UP',
+      'health.warn': 'health: degradado',
+      'health.down': 'health: down',
+    },
+    'en-US': {
+      'lang.toggle': 'PT',
+      'auth.title': 'Authentication',
+      'task.title': 'Tasks',
+      'task.hint': 'Full CRUD via JWT',
+      'task.search': 'Search task',
+      'task.search.placeholder': 'title, description, category or status',
+      'task.create': 'Create task',
+      'tasks.empty.title': 'Your board is clear',
+      'tasks.empty.body': 'Create the first task to watch the API, audit trail, and metrics flow live.',
+      'tasks.empty.cta': 'Create first task',
+      'tabs.tasks': 'Tasks',
+      'tabs.categories': 'Categories',
+      'tabs.audit': 'Audit',
+      'tabs.metrics': 'Metrics',
+      'health.pending': 'health: --',
+      'health.up': 'health: UP',
+      'health.warn': 'health: degraded',
+      'health.down': 'health: down',
+    },
+  };
+
+  function t(key) {
+    return i18n[currentLang]?.[key] || i18n['pt-BR'][key] || key;
+  }
 
   // ============================================================
   // DOM helpers (nunca usar innerHTML para dados do servidor).
@@ -291,6 +342,33 @@
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
 
+  function setText(selector, key) {
+    const node = $(selector);
+    if (node) node.textContent = t(key);
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = currentLang;
+    $('#lang-toggle').textContent = t('lang.toggle');
+    setText('.auth-card h2', 'auth.title');
+    setText('#tab-btn-tarefas', 'tabs.tasks');
+    setText('#tab-btn-categorias', 'tabs.categories');
+    setText('#tab-btn-auditoria', 'tabs.audit');
+    setText('#tab-btn-metricas', 'tabs.metrics');
+    setText('#tab-tarefas h2', 'task.title');
+    setText('#tab-tarefas .card-header .hint', 'task.hint');
+    const searchLabel = $('.search-label');
+    if (searchLabel?.firstChild) searchLabel.firstChild.textContent = t('task.search') + ' ';
+    $('#task-search').placeholder = t('task.search.placeholder');
+    $('#tarefa-form button[type=submit]').textContent = t('task.create');
+    renderTarefas();
+  }
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
+    applyI18n();
+  }
+
   // ============================================================
   // AUTH UI
   // ============================================================
@@ -415,7 +493,15 @@
 
   function renderTarefas() {
     const host = $('#tarefa-list');
-    const visibleTarefas = tarefas.filter(t => !pendingDeleteTimers.has(t.id));
+    const query = taskSearch.trim().toLowerCase();
+    const visibleTarefas = tarefas
+      .filter(t => !pendingDeleteTimers.has(t.id))
+      .filter(t => !query || [
+        t.titulo,
+        t.descricao || '',
+        t.categoria?.descricao || '',
+        t.status || '',
+      ].some(value => value.toLowerCase().includes(query)));
     if (visibleTarefas.length === 0) {
       host.replaceChildren(renderEmptyTasksState());
       return;
@@ -461,13 +547,13 @@
     });
     return el('div', { class: 'empty-state' }, [
       svg,
-      el('strong', {}, ['Seu quadro está limpo']),
-      el('p', {}, ['Crie a primeira tarefa para ver o fluxo completo de API, auditoria e métricas acontecendo ao vivo.']),
+      el('strong', {}, [t('tasks.empty.title')]),
+      el('p', {}, [t('tasks.empty.body')]),
       el('button', {
         class: 'btn btn-primary',
         type: 'button',
         onclick: () => $('#tarefa-form input[name=titulo]')?.focus(),
-      }, ['Criar primeira tarefa']),
+      }, [t('tasks.empty.cta')]),
     ]);
   }
 
@@ -617,6 +703,13 @@
     });
   });
 
+  $('#task-search').addEventListener('input', ev => {
+    taskSearch = ev.target.value;
+    renderTarefas();
+  });
+
+  $('#lang-toggle').addEventListener('click', toggleLanguage);
+
   $('#reset-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, async () => {
     if (!(await confirmAction('Limpar tokens em memória, listas e auditoria da sessão?'))) return;
     clearTokens();
@@ -638,16 +731,35 @@
   // ============================================================
   $$('.tab').forEach(tab => {
     tab.addEventListener('click', () => activateTab(tab.dataset.tab));
+    tab.addEventListener('keydown', handleTabKeydown);
   });
 
-  function activateTab(name) {
-    $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+  function activateTab(name, focus = false) {
+    $$('.tab').forEach(t => {
+      const active = t.dataset.tab === name;
+      t.setAttribute('aria-selected', String(active));
+      t.tabIndex = active ? 0 : -1;
+      if (active && focus) t.focus();
+    });
     $$('.tab-panel').forEach(p => { p.hidden = (p.id !== `tab-${name}`); });
     if (name !== 'metricas' && metricsTimer) {
       clearTimeout(metricsTimer);
       metricsTimer = null;
     }
     if (name === 'metricas') refreshMetrics();
+  }
+
+  function handleTabKeydown(ev) {
+    const tabs = $$('.tab');
+    const idx = tabs.indexOf(ev.currentTarget);
+    let next = null;
+    if (ev.key === 'ArrowRight') next = tabs[(idx + 1) % tabs.length];
+    else if (ev.key === 'ArrowLeft') next = tabs[(idx - 1 + tabs.length) % tabs.length];
+    else if (ev.key === 'Home') next = tabs[0];
+    else if (ev.key === 'End') next = tabs[tabs.length - 1];
+    if (!next) return;
+    ev.preventDefault();
+    activateTab(next.dataset.tab, true);
   }
 
   // ============================================================
@@ -677,9 +789,11 @@
       }
       const summary = parsePrometheus(text);
       $('#m-rps').textContent = summary.rps != null ? summary.rps.toFixed(1) : '--';
-      $('#m-p95').textContent = summary.p95 != null ? Math.round(summary.p95 * 1000) : '--';
+      const p95Ms = summary.p95 != null ? Math.round(summary.p95 * 1000) : null;
+      $('#m-p95').textContent = p95Ms != null ? p95Ms : '--';
       $('#m-4xx').textContent = summary.count4xx;
       $('#m-5xx').textContent = summary.count5xx;
+      if (p95Ms != null) pushLatencySample(p95Ms);
       $('#metrics-hint').textContent = summary.formatMatched
         ? 'snapshot capturado de /actuator/prometheus'
         : 'metricas presentes mas formato inesperado — abra DevTools';
@@ -715,6 +829,32 @@
       }
     }
     return { rps: totalCount > 0 ? totalCount / 60 : null, p95, count4xx, count5xx, formatMatched };
+  }
+
+  function pushLatencySample(valueMs) {
+    latencyHistory.push(valueMs);
+    if (latencyHistory.length > 30) latencyHistory.shift();
+    renderLatencySparkline();
+  }
+
+  function renderLatencySparkline() {
+    const svg = $('#latency-sparkline');
+    if (!svg) return;
+    svg.replaceChildren();
+    if (latencyHistory.length < 2) return;
+    const width = 240;
+    const height = 48;
+    const max = Math.max(100, ...latencyHistory);
+    const points = latencyHistory.map((v, i) => {
+      const x = (i / (latencyHistory.length - 1)) * (width - 12) + 6;
+      const y = height - 6 - ((v / max) * (height - 12));
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${points.replaceAll(' ', ' L ')}`);
+    svg.classList.toggle('latency-hot', latencyHistory.at(-1) > 500);
+    svg.classList.toggle('latency-warn', latencyHistory.at(-1) >= 100 && latencyHistory.at(-1) <= 500);
+    svg.append(path);
   }
 
   // ============================================================
@@ -983,6 +1123,81 @@
   }
 
   // ============================================================
+  // HEALTH + KEYBOARD SHORTCUTS
+  // ============================================================
+  async function refreshHealth() {
+    const pill = $('#health-pill');
+    try {
+      const response = await fetch('/actuator/health', { headers: { Accept: 'application/json' }, credentials: 'omit' });
+      const text = await response.text();
+      let body = {};
+      try { body = JSON.parse(text); } catch (_) {}
+      pill.title = text || `HTTP ${response.status}`;
+      pill.classList.remove('health-up', 'health-warn', 'health-down');
+      if (response.ok && body.status === 'UP') {
+        pill.classList.add('health-up');
+        pill.textContent = t('health.up');
+      } else if (response.ok) {
+        pill.classList.add('health-warn');
+        pill.textContent = t('health.warn');
+      } else {
+        pill.classList.add('health-down');
+        pill.textContent = t('health.down');
+      }
+    } catch (err) {
+      pill.classList.remove('health-up', 'health-warn');
+      pill.classList.add('health-down');
+      pill.textContent = t('health.down');
+      pill.title = String(err);
+    } finally {
+      if (healthTimer) clearTimeout(healthTimer);
+      healthTimer = setTimeout(refreshHealth, 30_000);
+    }
+  }
+
+  function isTypingTarget(target) {
+    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable;
+  }
+
+  let pendingGoto = null;
+  function handleGlobalShortcuts(ev) {
+    if (ev.key === 'Escape') {
+      document.querySelector('dialog[open]')?.close('cancel');
+      pendingGoto = null;
+      return;
+    }
+    if (isTypingTarget(ev.target)) return;
+    if (ev.key === '?') {
+      ev.preventDefault();
+      $('#shortcuts-dialog').showModal();
+      return;
+    }
+    if (ev.key === 'c') {
+      ev.preventDefault();
+      $('#tarefa-form input[name=titulo]')?.focus();
+      return;
+    }
+    if (ev.key === '/') {
+      ev.preventDefault();
+      $('#task-search')?.focus();
+      return;
+    }
+    if (pendingGoto === 'g') {
+      const target = { t: 'tarefas', c: 'categorias', a: 'auditoria', m: 'metricas' }[ev.key];
+      pendingGoto = null;
+      if (target) {
+        ev.preventDefault();
+        activateTab(target, true);
+      }
+      return;
+    }
+    if (ev.key === 'g') {
+      pendingGoto = 'g';
+      setTimeout(() => { pendingGoto = null; }, 900);
+    }
+  }
+
+  // ============================================================
   // INIT
   // ============================================================
   function onAuthenticated() {
@@ -990,8 +1205,11 @@
     loadTarefas();
   }
 
+  document.addEventListener('keydown', handleGlobalShortcuts);
+  applyI18n();
   setInterval(tickCountdown, 1000);
   loadPlaygroundConfig();
+  refreshHealth();
   updateAuthUI();
   renderDefenseBar();
 })();
