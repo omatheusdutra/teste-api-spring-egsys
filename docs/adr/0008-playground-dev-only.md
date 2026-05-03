@@ -2,7 +2,10 @@
 
 ## Status
 
-Aceita
+Substituida pela [ADR 0009](0009-playground-production-demo-controlled.md).
+
+Esta decisao foi valida na primeira versao do playground, mas foi refinada para permitir uma demo
+controlada em producao sem expor os botoes ofensivos.
 
 ## Contexto
 

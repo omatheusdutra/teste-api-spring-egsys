@@ -17,7 +17,7 @@
     <img src="/egsys-logo.svg" alt="EGSYS" class="brand-logo">
     <div>
       <div class="brand-title">Tasks API · Playground</div>
-      <div class="brand-sub">profile <code>dev</code> · pagina nao existe em <code>prod</code></div>
+      <div class="brand-sub">demo controlada · tokens em memoria · ataques apenas em sandbox</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -53,11 +53,14 @@
       </div>
     </div>
 
-    <div class="card defense-demos">
+    <div class="card defense-demos" id="defense-demos-card">
       <header class="card-header">
         <h2>Provoque uma defesa</h2>
         <span class="hint">cada botao ataca a propria API e mostra se a defesa segurou</span>
       </header>
+      <p id="defense-demos-disabled" class="demo-disabled-message" hidden>
+        Demonstrações ofensivas disponíveis apenas em ambiente controlado.
+      </p>
       <div class="demo-grid">
         <button class="demo-btn" type="button" data-demo="rate-limit">
           <span class="demo-icon">🔥</span>

@@ -17,7 +17,7 @@ Etapas 0 a 9 concluidas: bootstrap, dominio puro em TDD, persistencia PostgreSQL
 API REST v1, seguranca com JWT RS256, Argon2id, RBAC, anti-IDOR, revogacao/rate limiting e observabilidade com
 logs JSON, correlation ID, Prometheus autenticado, tracing OTLP, health checks customizados e inovacoes com status,
 Outbox, historico auditavel e CSV. A entrega inclui Dockerfile distroless, docker-compose, Makefile, Bruno collection e
-workflows de CI/seguranca. O projeto tambem inclui playground interativo dev-only e pentest defensivo reproduzivel
+workflows de CI/seguranca. O projeto tambem inclui playground interativo como demo controlada e pentest defensivo reproduzivel
 com 49 cenarios.
 
 ## 🧱 Stack Base
@@ -74,7 +74,7 @@ docker compose up -d postgres redis
 ./gradlew bootRun
 ```
 
-Rodar com playground interativo habilitado:
+Rodar com playground interativo e demonstracoes ofensivas habilitadas:
 
 ```bash
 docker compose up -d postgres redis
@@ -88,23 +88,28 @@ Para o Prometheus raspar `/actuator/prometheus`, gere um token admin local e sub
 
 ## ⚡ Tour de 30s
 
-1. Com o profile `dev`, abra `http://localhost:8080/playground`.
+1. Abra `http://localhost:8080/playground` ou use o botao "Abrir Playground Interativo" na home publica.
 2. Registre ou faca login pelo painel de auth.
 3. Crie uma tarefa, liste, altere status e abra o historico.
-4. Use "Provoque uma defesa" para ver rate limit, IDOR, JWT adulterado, SQLi e mass assignment sendo bloqueados.
+4. Em `dev`/`local`, use "Provoque uma defesa" para ver rate limit, IDOR, JWT adulterado, SQLi e mass assignment sendo bloqueados.
 
 Alternativa via cliente HTTP: abra a colecao Bruno `bruno/egsys-tasks-api`, execute `01 Register`, `02 Login`,
 `03 Create Task` e `04 List Tasks`.
 
 ## Playground Interativo
 
-O playground fica em `/playground` somente com `SPRING_PROFILES_ACTIVE=dev`. Ele nao mora em `static/`; e servido
-por `PlaygroundController` com `@Profile("dev")`, conforme [ADR 0008](docs/adr/0008-playground-dev-only.md).
+O playground fica em `/playground` e tambem pode ser acessado pelo CTA futurista da home publica. Ele nao mora em
+`static/`; e servido por `PlaygroundController` somente quando `egsys.playground.enabled=true`, conforme
+[ADR 0009](docs/adr/0009-playground-production-demo-controlled.md).
+
+Em producao, o playground funciona como demo controlada: auth, CRUD e visualizacao da API ficam disponiveis, mas o
+painel "Provoque uma defesa" e bloqueado por `egsys.playground.attack-demos-enabled=false`. O pentest ofensivo completo
+permanece em `dev`/`local`/sandbox.
 
 - Auth completo: registrar, login, refresh, logout e countdown do JWT.
 - CRUD/tour de tarefas: categorias, criacao, listagem, status, historico e CSV.
 - Painel Request/Response com copiar como `curl` e repetir request.
-- Demonstracoes defensivas: rate limit, IDOR, token adulterado/expirado, SQLi e mass assignment.
+- Demonstracoes defensivas: rate limit, IDOR, token adulterado/expirado, SQLi e mass assignment, habilitadas apenas em ambiente controlado.
 - Hardening frontend: token apenas em memoria JS, sem `localStorage`, sem `sessionStorage`, sem `eval`, sem inline handlers.
 
 ## 📚 API REST v1
@@ -129,7 +134,8 @@ Endpoints implementados:
 - `DELETE /api/v1/tarefas/{id}`
 - `GET /actuator/health` (autenticado)
 - `GET /actuator/prometheus` (autenticado)
-- `GET /playground` (somente profile `dev`)
+- `GET /playground` (demo controlada por `egsys.playground.enabled`)
+- `GET /playground/config` (informa se demos ofensivas estao habilitadas)
 
 Erros HTTP usam `application/problem+json` via RFC 7807 `ProblemDetail`. As listagens de tarefas usam paginacao
 cursor-based, evitando offset em colecoes grandes.
@@ -155,7 +161,7 @@ Pentest interno reproduzivel em `tools/pentest/` confirmado em 2026-05-02. Relat
 | Stack trace/info leak | ProblemDetail sem stack trace e `Server` removido | `InfoLeakTests` | `03-rate-headers-playground.sh` #41-42 PASS |
 | Correlation ID malicioso | regex allowlist, tamanho maximo e fallback para UUID servidor | `CorrelationIdFilterTest` | coberto por teste |
 | Vazamento de metricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` | `01-auth-idor.sh` #15 PASS |
-| Playground exposto em prod | controller com `@Profile("dev")`, HTML fora de `static/` | `PlaygroundProfileTests` | `03-rate-headers-playground.sh` #44-49 PASS |
+| Playground ofensivo em prod | demo permitida por propriedade, mas demos ofensivas bloqueadas por `attack-demos-enabled=false`; HTML fora de `static/` | `PlaygroundAvailabilityTests`, `PlaygroundFrontendTest` | `03-rate-headers-playground.sh` #44-49 PASS |
 | Perda de evento apos commit | Outbox transacional em `outbox_events` | `TarefaJpaRepositoryIntegrationTest` | coberto por teste |
 | Auditoria filtrada no cliente | Historico filtra por `owner_id` no repositorio/use case | `RestApiWebTest` | coberto por teste |
 | CSV injection / quebra de formato | campos CSV com aspas, virgulas e quebras sao escapados | `RestApiWebTest` | coberto por teste |
@@ -213,7 +219,8 @@ Rel(infra, redis, "RESP")
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
 | [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Inovacoes com Outbox, historico, status e CSV |
 | [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
-| [0008](docs/adr/0008-playground-dev-only.md) | Playground interativo dev-only |
+| [0008](docs/adr/0008-playground-dev-only.md) | Playground interativo dev-only (substituida) |
+| [0009](docs/adr/0009-playground-production-demo-controlled.md) | Playground como demo controlada por propriedades |
 
 ## 🗺️ Roadmap Futuro
 

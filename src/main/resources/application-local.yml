@@ -20,3 +20,8 @@ spring:
 logging:
   level:
     br.com.egsys.tasks: INFO
+
+egsys:
+  playground:
+    enabled: true
+    attack-demos-enabled: true

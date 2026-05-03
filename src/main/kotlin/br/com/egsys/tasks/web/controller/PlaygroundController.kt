@@ -1,7 +1,8 @@
 package br.com.egsys.tasks.web.controller
 
 import io.swagger.v3.oas.annotations.Hidden
-import org.springframework.context.annotation.Profile
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -13,14 +14,25 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
 
 @Controller
-@Profile("dev")
 @RequestMapping("/playground")
+@ConditionalOnProperty(prefix = "egsys.playground", name = ["enabled"], havingValue = "true")
+@EnableConfigurationProperties(PlaygroundProperties::class)
 @Hidden
-class PlaygroundController {
+class PlaygroundController(
+    private val properties: PlaygroundProperties,
+) {
     @GetMapping
     @ResponseBody
     @PreAuthorize("permitAll()")
     fun page(): ResponseEntity<ByteArray> = serve("playground.html", "text/html;charset=UTF-8")
+
+    @GetMapping("/config")
+    @ResponseBody
+    @PreAuthorize("permitAll()")
+    fun config(): PlaygroundConfigResponse =
+        PlaygroundConfigResponse(
+            attackDemosEnabled = properties.attackDemosEnabled,
+        )
 
     @GetMapping("/assets/{name:[a-z0-9.-]{1,64}}")
     @ResponseBody
@@ -63,3 +75,7 @@ class PlaygroundController {
             .header("X-Robots-Tag", "noindex")
             .body(bytes)
 }
+
+data class PlaygroundConfigResponse(
+    val attackDemosEnabled: Boolean,
+)

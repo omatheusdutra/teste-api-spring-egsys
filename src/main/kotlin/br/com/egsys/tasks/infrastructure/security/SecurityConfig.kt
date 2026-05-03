@@ -67,9 +67,8 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.GET, "/index.html").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/home.js").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/egsys-logo.svg").permitAll()
-                // Playground page is gated by @Profile("dev") on PlaygroundController itself; outside dev the
-                // bean is absent so the dispatcher returns 404. The static resource lives outside /static/, so
-                // there is no path that lets it leak in prod.
+                // Playground is feature-flagged by egsys.playground.enabled. The static resource lives outside
+                // /static/, so there is no path that bypasses the property-controlled controller.
                 it.requestMatchers(HttpMethod.GET, "/playground", "/playground/**").permitAll()
                 // Public by design: account bootstrap and token rotation must be reachable before authentication.
                 it.requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()

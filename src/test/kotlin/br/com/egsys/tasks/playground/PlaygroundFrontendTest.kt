@@ -73,9 +73,9 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `html anuncia profile dev e nao indexa em buscadores`() {
+    fun `html anuncia demo controlada e nao indexa em buscadores`() {
         html.shouldContain("noindex")
-        html.shouldContain("dev")
+        html.shouldContain("demo controlada")
     }
 
     @Test
@@ -89,5 +89,12 @@ class PlaygroundFrontendTest {
         val demos = listOf("rate-limit", "idor", "tampered-jwt", "alg-none", "sqli", "mass-assignment")
         demos.forEach { html.shouldContain("data-demo=\"$it\"") }
         demos.forEach { js.shouldContain("'$it'") }
+    }
+
+    @Test
+    fun `playground busca config e bloqueia demos ofensivas quando desabilitadas`() {
+        js.shouldContain("/playground/config")
+        js.shouldContain("attackDemosEnabled")
+        html.shouldContain("Demonstrações ofensivas disponíveis apenas em ambiente controlado.")
     }
 }

@@ -176,6 +176,21 @@ code, pre { font-family: var(--font-mono); }
 .grid-form button { grid-column: 1 / -1; }
 
 .defense-demos { border-color: rgba(34, 211, 238, 0.18); }
+.defense-demos.demo-locked {
+  border-color: rgba(255, 107, 44, 0.22);
+}
+.defense-demos.demo-locked .demo-grid {
+  display: none;
+}
+.demo-disabled-message {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 107, 44, 0.32);
+  border-radius: 10px;
+  color: var(--orange-soft);
+  background: rgba(255, 107, 44, 0.08);
+  font-size: 13px;
+}
 .demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (max-width: 720px) { .demo-grid { grid-template-columns: 1fr 1fr; } }
 .demo-btn {

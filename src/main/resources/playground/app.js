@@ -15,6 +15,7 @@
   let lastRequest = null;  // { method, url, headers, body, status, latencyMs, responseText }
   const auditLog = [];
   const defenseStats = { rateLimit: { current: 0, max: 100 }, lastTriggered: null };
+  let playgroundConfig = { attackDemosEnabled: false };
   let refreshTimer = null;
 
   // ============================================================
@@ -44,6 +45,38 @@
     const t = el('div', { class: `toast ${kind}` }, [msg]);
     host.append(t);
     setTimeout(() => t.remove(), 3500);
+  }
+
+  function attackDemosUnavailableMessage() {
+    return 'Demonstrações ofensivas disponíveis apenas em ambiente controlado.';
+  }
+
+  async function loadPlaygroundConfig() {
+    applyPlaygroundConfig();
+    try {
+      const response = await fetch('/playground/config', {
+        headers: { Accept: 'application/json' },
+        credentials: 'omit',
+      });
+      if (response.ok) {
+        playgroundConfig = await response.json();
+      }
+    } catch (_) {
+      playgroundConfig = { attackDemosEnabled: false };
+    }
+    applyPlaygroundConfig();
+  }
+
+  function applyPlaygroundConfig() {
+    const attackDemosEnabled = playgroundConfig.attackDemosEnabled === true;
+    const card = $('#defense-demos-card');
+    const message = $('#defense-demos-disabled');
+    if (card) card.classList.toggle('demo-locked', !attackDemosEnabled);
+    if (message) message.hidden = attackDemosEnabled;
+    $$('.demo-btn').forEach(btn => {
+      btn.disabled = !attackDemosEnabled;
+      btn.setAttribute('aria-disabled', String(!attackDemosEnabled));
+    });
   }
 
   // ============================================================
@@ -712,6 +745,11 @@
   });
 
   async function runDemo(name, btn) {
+    if (playgroundConfig.attackDemosEnabled !== true) {
+      toast(attackDemosUnavailableMessage(), 'err');
+      applyPlaygroundConfig();
+      return;
+    }
     const demo = demos[name];
     if (!demo) return;
     if (demo.requireAuth && !accessToken) {
@@ -731,7 +769,7 @@
       verdict.className = 'demo-verdict fail';
       verdict.textContent = `erro: ${err.message}`;
     } finally {
-      btn.disabled = false;
+      btn.disabled = playgroundConfig.attackDemosEnabled !== true;
     }
   }
 
@@ -744,6 +782,7 @@
   }
 
   setInterval(tickCountdown, 1000);
+  loadPlaygroundConfig();
   updateAuthUI();
   renderDefenseBar();
 })();

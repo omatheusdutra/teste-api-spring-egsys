@@ -18,6 +18,9 @@ spring:
       ddl-auto: validate
 
 egsys:
+  playground:
+    enabled: true
+    attack-demos-enabled: false
   security:
     allowed-origins: ${EGSYS_ALLOWED_ORIGINS}
     password-pepper: ${EGSYS_PASSWORD_PEPPER}

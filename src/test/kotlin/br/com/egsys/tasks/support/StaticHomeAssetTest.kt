@@ -13,6 +13,8 @@ class StaticHomeAssetTest {
         html.contains("""<link rel="icon" href="/egsys-logo.svg" type="image/svg+xml">""").shouldBeTrue()
         html.contains("""<img src="/egsys-logo.svg" alt="Grupo Bringel" class="brand-mark-img">""").shouldBeTrue()
         html.contains("https://github.com/omatheusdutra/teste-api-spring-egsys").shouldBeTrue()
+        html.contains("href=\"/playground\"").shouldBeTrue()
+        html.contains("Abrir Playground Interativo").shouldBeTrue()
         html.contains("""<script src="/home.js"></script>""").shouldBeTrue()
         html.contains("""<div class="brand-mark">eB</div>""").shouldBeFalse()
         html.contains("fonts.googleapis.com").shouldBeFalse()
