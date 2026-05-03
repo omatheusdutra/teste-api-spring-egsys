@@ -132,17 +132,21 @@ Erros HTTP usam RFC 7807 `ProblemDetail`. Listagens usam paginação cursor-base
 
 | Vetor | Defesa | Evidência |
 | --- | --- | --- |
-| JWT `alg=none` / HS256 | rejeição explícita de algoritmos não RS256 | `AuthenticationTests`, `01-auth-idor.sh` |
-| Token expirado, adulterado ou revogado | claims rigorosas + blacklist Redis por JTI | `AuthenticationTests`, `JwtReplayTests` |
+| JWT `alg=none` / HS256 | rejeição explícita de algoritmos não RS256 | `AuthenticationTests`, `01-auth-idor.sh`, playground demo |
+| Token expirado, adulterado ou revogado | claims rigorosas + blacklist Redis por JTI | `AuthenticationTests`, `JwtReplayTests`, playground demo |
 | Refresh token reutilizado | rotação e revogação da família | `RefreshTokenReuseTests` |
-| IDOR em tarefas | ownership em use cases e queries por `owner_id` | `IdorTests`, `01-auth-idor.sh` |
-| Mass assignment | DTOs explícitos e `ignoreUnknown=false` | `MassAssignmentTests` |
-| SQL injection | JPA/JPQL parametrizado e cursor opaco | `SqlInjectionTests`, `02-input-sqli-xss.sh` |
+| IDOR em tarefas | ownership em use cases e queries por `owner_id` | `IdorTests`, `01-auth-idor.sh`, playground demo |
+| Mass assignment | DTOs explícitos e `ignoreUnknown=false` | `MassAssignmentTests`, playground demo |
+| SQL injection | JPA/JPQL parametrizado e cursor opaco | `SqlInjectionTests`, `02-input-sqli-xss.sh`, playground demo |
 | XSS/reflection | JSON correto, `nosniff`, CSP e `textContent` no playground | `XssReflectionTests`, `PlaygroundFrontendTest` |
-| Brute force / abuso | rate limiting por IP/usuário com `Retry-After` | `BruteForceTests`, `03-rate-headers-playground.sh` |
+| Brute force / abuso | rate limiting por IP/usuário com `Retry-After` | `BruteForceTests`, `03-rate-headers-playground.sh`, playground demo |
 | Info leak | ProblemDetail sem stack trace e header `Server` removido | `InfoLeakTests` |
 | Métricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
 | Playground ofensivo em prod | demo permitida, ataques bloqueados por propriedade | `PlaygroundAvailabilityTests` |
+
+Validação final do playground polido: `./gradlew check jacocoTestReport` verde em 2026-05-03. Lighthouse não foi executado
+nesta máquina porque a CLI `lighthouse` não estava instalada/cacheada localmente; os screenshots e o smoke visual foram gerados
+via Chrome headless.
 
 ## 📈 Observabilidade
 
