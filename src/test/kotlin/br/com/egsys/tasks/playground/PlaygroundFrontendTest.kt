@@ -99,7 +99,11 @@ class PlaygroundFrontendTest {
     fun `painel de demonstrações de defesa expõe os 6 cenários prometidos`() {
         val demos = listOf("rate-limit", "idor", "tampered-jwt", "alg-none", "sqli", "mass-assignment")
         demos.forEach { html.shouldContain("data-demo=\"$it\"") }
-        demos.forEach { js.shouldContain("'$it'") }
+        demos.forEach { name ->
+            // chave de objeto JS pode ser 'name': ou name: (sem aspas) quando for identificador valido.
+            val pattern = Regex("(?:'${Regex.escape(name)}'|\\b${Regex.escape(name)})\\s*:")
+            pattern.containsMatchIn(js).shouldBeTrue()
+        }
     }
 
     @Test
@@ -296,5 +300,85 @@ class PlaygroundFrontendTest {
         js.shouldContain("ev.key === 'ArrowRight'")
         js.shouldContain("ev.key === 'Home'")
         js.shouldContain("ev.key === 'End'")
+    }
+
+    // -------------------------------------------------------------
+    // Intrusion Theater (visualizacao cinematografica dos demos)
+    // -------------------------------------------------------------
+
+    @Test
+    fun `intrusion theater tem dialogo nativo com titulo acessivel`() {
+        html.shouldContain("id=\"intrusion-theater\"")
+        html.shouldContain("aria-labelledby=\"theater-title\"")
+        html.shouldContain("id=\"theater-title\"")
+        html.shouldContain("class=\"visually-hidden\"")
+        css.shouldContain(".visually-hidden")
+    }
+
+    @Test
+    fun `intrusion theater tem painel attacker e defense grid`() {
+        html.shouldContain("id=\"theater-attacker-log\"")
+        html.shouldContain("id=\"theater-defense-list\"")
+        html.shouldContain("id=\"theater-verdict\"")
+        html.shouldContain("id=\"theater-close\"")
+    }
+
+    @Test
+    fun `intrusion theater orquestra boot recon payload defense response e verdict`() {
+        // o roteiro deve cobrir todas as 6 demos com camadas, recon e veredictos.
+        val demos = listOf("rate-limit", "idor", "tampered-jwt", "alg-none", "sqli", "mass-assignment")
+        demos.forEach { name ->
+            val pattern = Regex("(?:'${Regex.escape(name)}'|\\b${Regex.escape(name)})\\s*:")
+            pattern.containsMatchIn(js).shouldBeTrue()
+        }
+        js.shouldContain("const theaterScripts =")
+        js.shouldContain("verdictOk:")
+        js.shouldContain("verdictFail:")
+        js.shouldContain("expectedDefense:")
+        js.shouldContain("async function openTheater")
+        js.shouldContain("async function typeLine")
+    }
+
+    @Test
+    fun `intrusion theater respeita prefers-reduced-motion`() {
+        js.shouldContain("matchMedia('(prefers-reduced-motion: reduce)').matches")
+        js.shouldContain("const baseDelay = reduced ? 0 : 60")
+        css.shouldContain("@media (prefers-reduced-motion: reduce)")
+        css.shouldContain(".theater-scanlines")
+        // bloco de reduced-motion desliga as animacoes do teatro
+        val reducedBlock =
+            Regex("@media \\(prefers-reduced-motion: reduce\\)\\s*\\{[\\s\\S]+?\\n\\}", RegexOption.MULTILINE)
+                .find(css)
+                ?.value
+                .orEmpty()
+        reducedBlock.shouldContain("theater")
+    }
+
+    @Test
+    fun `intrusion theater fecha com botao backdrop e devolve foco`() {
+        // botao FECHAR deve ter listener explicito e o close do dialog deve restaurar foco
+        // ao botao da demo que abriu o teatro.
+        js.shouldContain("wireTheaterDialog")
+        js.shouldContain("closeBtn.addEventListener('click'")
+        js.shouldContain("dlg.addEventListener('close'")
+        js.shouldContain("theaterReturnFocus")
+        // backdrop click tambem fecha (o evento ocorre quando ev.target === dlg)
+        js.shouldContain("if (ev.target === dlg) dlg.close")
+    }
+
+    @Test
+    fun `cada demo reporta status e latencia reais ao teatro`() {
+        // o teatro nao substitui o ataque; ele consome telemetria real via callback.
+        js.shouldContain("reportTelemetry({ status: r.status, latencyMs })")
+        js.shouldContain("await openTheater(name, result, attackResult, btn)")
+        js.shouldContain("performance.now()")
+    }
+
+    @Test
+    fun `i18n cobre as chaves do teatro nas duas linguas`() {
+        js.shouldContain("'theater.close': 'FECHAR · ESC'")
+        js.shouldContain("'theater.close': 'CLOSE · ESC'")
+        js.shouldContain("'theater.attacker'")
+        js.shouldContain("'theater.defense'")
     }
 }

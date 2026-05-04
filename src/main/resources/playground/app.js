@@ -44,6 +44,9 @@
       'health.up': 'health: UP',
       'health.warn': 'health: degradado',
       'health.down': 'health: down',
+      'theater.close': 'FECHAR · ESC',
+      'theater.attacker': 'attacker · pov',
+      'theater.defense': 'defense grid · target pov',
     },
     'en-US': {
       'lang.toggle': 'PT',
@@ -64,6 +67,9 @@
       'health.up': 'health: UP',
       'health.warn': 'health: degraded',
       'health.down': 'health: down',
+      'theater.close': 'CLOSE · ESC',
+      'theater.attacker': 'attacker · pov',
+      'theater.defense': 'defense grid · target pov',
     },
   };
 
@@ -368,6 +374,241 @@
     currentLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
     applyI18n();
   }
+
+  // ============================================================
+  // INTRUSION THEATER — dramatiza ataques reais sem substituir o fetch.
+  // Status e latência exibidos vêm da resposta verdadeira da API.
+  // ============================================================
+  const theaterScripts = {
+    'rate-limit': {
+      title: 'flood attack · /auth/login',
+      layers: ['rate-limiter', 'auth-throttle', 'audit-logger'],
+      primary: 'rate-limiter',
+      recon: [
+        { type: 'info', text: '> target: POST /api/v1/auth/login' },
+        { type: 'info', text: '> known limit: login throttle by IP/user' },
+        { type: 'warn', text: '> firing 120 parallel requests with invalid credentials' },
+      ],
+      payloadHint: 'POST /auth/login × 120  (Promise.all)',
+      expectedDefense: 'Bucket4j rate limiter on Spring filter chain',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '429 returned · attacker throttled · audit trail preserved' },
+      verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'no 429 received — rate limit may not be active' },
+    },
+    idor: {
+      title: 'idor probe · cross-tenant access',
+      layers: ['jwt-verifier', 'rbac-ownership', 'response-shaper', 'audit-logger'],
+      primary: 'rbac-ownership',
+      recon: [
+        { type: 'info', text: '> generating random uuid with crypto.randomUUID()' },
+        { type: 'info', text: '> target: GET /api/v1/tarefas/{victim-id}' },
+        { type: 'warn', text: '> caller has token, but no ownership over target resource' },
+      ],
+      payloadHint: 'GET /api/v1/tarefas/{random-uuid}',
+      expectedDefense: 'repository and use case scope access by authenticated owner',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '404/403 — resource invisible to non-owner' },
+      verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'unexpected status — investigate ownership checks' },
+    },
+    'tampered-jwt': {
+      title: 'forgery attempt · signature flip',
+      layers: ['jwt-alg-filter', 'jwt-signature-verifier', 'audit-logger'],
+      primary: 'jwt-signature-verifier',
+      recon: [
+        { type: 'info', text: '> capturing legitimate token from current memory session' },
+        { type: 'warn', text: '> tampering last 4 chars of signature' },
+        { type: 'info', text: '> target: GET /api/v1/tarefas with mutated token' },
+      ],
+      payloadHint: 'Authorization: Bearer {tampered-token}',
+      expectedDefense: 'RS256 signature verification rejects modified JWT',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '401 — signature mismatch detected' },
+      verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'tampered token accepted — inspect JWT verification' },
+    },
+    'alg-none': {
+      title: 'alg confusion · none algorithm',
+      layers: ['jwt-alg-filter', 'jwt-signature-verifier', 'audit-logger'],
+      primary: 'jwt-alg-filter',
+      recon: [
+        { type: 'info', text: '> forging header: { "alg": "none", "typ": "JWT" }' },
+        { type: 'info', text: '> claims: roles=[ROLE_ADMIN], iss=egsys-tasks-api' },
+        { type: 'warn', text: '> signature: empty (attempting alg=none bypass)' },
+      ],
+      payloadHint: 'Authorization: Bearer {forged-jwt-no-signature}',
+      expectedDefense: 'accepted algorithms are allowlisted to RS256 only',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'alg=none rejected before trust boundary' },
+      verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'alg=none accepted — inspect JJWT configuration' },
+    },
+    sqli: {
+      title: 'sql injection · cursor payload',
+      layers: ['input-validator', 'jpa-parameterizer', 'audit-logger'],
+      primary: 'input-validator',
+      recon: [
+        { type: 'info', text: "> payload: '; DROP TABLE tarefas; --" },
+        { type: 'info', text: '> target: GET /api/v1/tarefas?cursor={payload}' },
+        { type: 'warn', text: '> verifying table integrity after attack request' },
+      ],
+      payloadHint: "GET /api/v1/tarefas?cursor='; DROP TABLE tarefas; --",
+      expectedDefense: 'cursor decoder rejects opaque payload before persistence access',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'payload rejected or neutralized · table still intact' },
+      verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'unexpected behavior — verify query path' },
+    },
+    'mass-assignment': {
+      title: 'privilege escalation · field injection',
+      layers: ['dto-strict-mode', 'ownership-resolver', 'audit-logger'],
+      primary: 'dto-strict-mode',
+      recon: [
+        { type: 'info', text: '> body includes ownerId=00000000... and role=ADMIN' },
+        { type: 'info', text: '> target: POST /api/v1/tarefas' },
+        { type: 'warn', text: '> server must reject or re-derive ownership from JWT' },
+      ],
+      payloadHint: 'POST /api/v1/tarefas { titulo, ownerId: <foreign>, role: ADMIN }',
+      expectedDefense: 'DTO strict mode rejects unknown properties before domain mutation',
+      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'injected fields rejected or ignored by server-side ownership' },
+      verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'injected ownership may have affected persistence' },
+    },
+  };
+
+  const layerLabels = {
+    'rate-limiter': 'Rate Limiter (Bucket4j)',
+    'auth-throttle': 'Auth Throttle (per-IP)',
+    'jwt-alg-filter': 'JWT Algorithm Filter (RS256 only)',
+    'jwt-signature-verifier': 'JWT Signature Verifier',
+    'jwt-verifier': 'JWT Validator (iss/aud/exp)',
+    'rbac-ownership': 'RBAC · Ownership Check',
+    'response-shaper': 'Response Shaper (404 over leak)',
+    'input-validator': 'Input Validator',
+    'jpa-parameterizer': 'JPA Parameter Binding',
+    'dto-strict-mode': 'DTO Strict Mode (failOnUnknown)',
+    'ownership-resolver': 'Ownership Resolver (from JWT)',
+    'audit-logger': 'Audit Logger',
+  };
+
+  let theaterReturnFocus = null;
+
+  async function openTheater(demoName, runResult, attackResult, triggerButton) {
+    const script = theaterScripts[demoName];
+    const dlg = $('#intrusion-theater');
+    if (!script || !dlg) return;
+
+    theaterReturnFocus = triggerButton || null;
+    const logHost = $('#theater-attacker-log');
+    const layerHost = $('#theater-defense-list');
+    const verdictHost = $('#theater-verdict');
+    const detailHost = $('#theater-defense-detail');
+    logHost.replaceChildren();
+    layerHost.replaceChildren();
+    verdictHost.classList.remove('visible', 'blocked', 'warning', 'breach');
+    verdictHost.replaceChildren();
+    detailHost.classList.remove('visible');
+    detailHost.textContent = '';
+    $('#attacker-title').textContent = t('theater.attacker');
+    $('#defense-title').textContent = t('theater.defense');
+    $('#theater-close').textContent = t('theater.close');
+
+    for (const layerKey of script.layers) {
+      layerHost.append(el('li', { class: 'idle', data: { layer: layerKey } }, [
+        el('span', { class: 'layer-status' }, []),
+        el('span', { class: 'layer-name' }, [layerLabels[layerKey] || layerKey]),
+        el('span', { class: 'layer-latency' }, ['--']),
+      ]));
+    }
+
+    if (dlg.open) dlg.close();
+    dlg.showModal();
+    $('#theater-close').focus();
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const baseDelay = reduced ? 0 : 60;
+
+    await typeLine(logHost, '> establishing controlled channel to localhost:8080...', 'log-info', baseDelay);
+    await typeLine(logHost, '> target acquired · sandbox=true · evidence=audit panel', 'log-info', baseDelay);
+    await typeLine(logHost, `> ${script.title}`, 'log-warn', baseDelay);
+    await wait(reduced ? 0 : 180);
+
+    for (const line of script.recon) {
+      await typeLine(logHost, line.text, `log-${line.type}`, baseDelay);
+    }
+
+    await wait(reduced ? 0 : 180);
+    await typeLine(logHost, '> firing payload', 'log-warn', baseDelay);
+    await typeLine(logHost, `  ${script.payloadHint}`, 'log-payload', baseDelay);
+
+    for (const layerKey of script.layers) {
+      const li = layerHost.querySelector(`[data-layer="${layerKey}"]`);
+      li.classList.remove('idle');
+      li.classList.add('checking');
+      await wait(reduced ? 0 : 180);
+      li.classList.remove('checking');
+      li.classList.add('active');
+      li.querySelector('.layer-latency').textContent =
+        layerKey === script.primary ? `${attackResult.latencyMs || 0}ms` : 'pass';
+      if (layerKey === script.primary) {
+        detailHost.classList.add('visible');
+        detailHost.textContent = `→ ${script.expectedDefense}`;
+      }
+    }
+
+    await typeLine(logHost, '◀ response', 'log-response', baseDelay);
+    await typeLine(logHost, `  status: ${attackResult.status || 0}`, responseLogKind(attackResult.status), baseDelay);
+    await typeLine(logHost, `  latency: ${attackResult.latencyMs || 0}ms`, 'log-response', baseDelay);
+
+    await wait(reduced ? 0 : 260);
+    const verdict = runResult.ok ? script.verdictOk : script.verdictFail;
+    verdictHost.classList.add('visible', verdict.kind);
+    verdictHost.append(
+      document.createTextNode(verdict.text),
+      el('span', { class: 'theater-verdict-sub' }, [verdict.sub]),
+    );
+  }
+
+  function responseLogKind(status) {
+    if (status >= 500) return 'log-err';
+    if (status >= 400) return 'log-response';
+    return 'log-warn';
+  }
+
+  async function typeLine(host, text, kind, baseDelay) {
+    const line = el('span', { class: `log-line ${kind}` }, []);
+    host.append(line);
+    if (baseDelay === 0) {
+      line.textContent = text;
+      host.scrollTop = host.scrollHeight;
+      return;
+    }
+    line.classList.add('typing-cursor');
+    for (let i = 0; i < text.length; i++) {
+      line.textContent = text.slice(0, i + 1);
+      host.scrollTop = host.scrollHeight;
+      if (i % 3 === 0) await wait(baseDelay / 8);
+    }
+    line.classList.remove('typing-cursor');
+    await wait(baseDelay);
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Wires close interactions for the Intrusion Theater dialog:
+  //   - explicit click on FECHAR button
+  //   - click on backdrop (the dialog element itself, since the inner grid stops the bubble)
+  //   - native Esc handling continues working via the global shortcut
+  // After close, focus returns to the demo button that opened the theater so
+  // keyboard users do not lose their place in the page.
+  (function wireTheaterDialog() {
+    const dlg = $('#intrusion-theater');
+    const closeBtn = $('#theater-close');
+    if (!dlg || !closeBtn) return;
+    closeBtn.addEventListener('click', () => dlg.close('user'));
+    dlg.addEventListener('click', ev => {
+      if (ev.target === dlg) dlg.close('backdrop');
+    });
+    dlg.addEventListener('close', () => {
+      const target = theaterReturnFocus;
+      theaterReturnFocus = null;
+      if (target && typeof target.focus === 'function') {
+        target.focus();
+      }
+    });
+  })();
 
   // ============================================================
   // AUTH UI
@@ -888,11 +1129,9 @@
   const demos = {
     'rate-limit': {
       requireAuth: false,
-      run: async () => {
-        // C2: dispara 120 requests em paralelo contra /auth/login com credenciais
-        // inválidas — payload idempotente, seguro de repetir. Limite por IP e 5/min,
-        // então o 429 deve vir cedo.
+      run: async reportTelemetry => {
         const target = '/api/v1/auth/login';
+        const started = performance.now();
         const promises = Array.from({ length: 120 }, () =>
           fetch(target, {
             method: 'POST',
@@ -902,8 +1141,10 @@
           }).then(r => r.status).catch(() => 0)
         );
         const results = await Promise.all(promises);
+        const latencyMs = Math.round(performance.now() - started);
         const got429 = results.includes(429);
         const firstBlocked = results.findIndex(s => s === 429);
+        reportTelemetry({ status: got429 ? 429 : results.at(-1) || 0, latencyMs });
         return {
           ok: got429,
           summary: got429
@@ -913,20 +1154,22 @@
         };
       },
     },
-    'idor': {
+    idor: {
       requireAuth: true,
-      run: async () => {
-        // C3: usa crypto.randomUUID() — gera UUID v4 válido e bem formado.
-        // Se a API retornar 400 aqui, é UUID malformado, NÃO defesa IDOR.
+      run: async reportTelemetry => {
         const randomUuid = crypto.randomUUID();
         const url = `/api/v1/tarefas/${randomUuid}`;
+        const started = performance.now();
         const r = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         });
+        const latencyMs = Math.round(performance.now() - started);
+        const responseText = await r.text();
+        reportTelemetry({ status: r.status, latencyMs });
         recordRequest({
           method: 'GET', url,
           headers: { Authorization: `Bearer ${accessToken}` }, body: null,
-          status: r.status, latencyMs: 0, responseText: await r.text(),
+          status: r.status, latencyMs, responseText,
         });
         const ok = r.status === 404 || r.status === 403;
         return {
@@ -940,14 +1183,18 @@
     },
     'tampered-jwt': {
       requireAuth: true,
-      run: async () => {
+      run: async reportTelemetry => {
         const tampered = accessToken.slice(0, -4) + 'AAAA';
+        const started = performance.now();
         const r = await fetch('/api/v1/tarefas', {
           headers: { Authorization: `Bearer ${tampered}`, Accept: 'application/json' },
         });
+        const latencyMs = Math.round(performance.now() - started);
+        const responseText = await r.text();
+        reportTelemetry({ status: r.status, latencyMs });
         recordRequest({
           method: 'GET', url: '/api/v1/tarefas', headers: { Authorization: `Bearer ${maskToken(tampered)}` },
-          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+          body: null, status: r.status, latencyMs, responseText,
         });
         return {
           ok: r.status === 401,
@@ -958,7 +1205,7 @@
     },
     'alg-none': {
       requireAuth: false,
-      run: async () => {
+      run: async reportTelemetry => {
         const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' })).replace(/=+$/, '');
         const payload = btoa(JSON.stringify({
           sub: '00000000-0000-0000-0000-000000000000', iss: 'egsys-tasks-api',
@@ -966,12 +1213,16 @@
           roles: ['ROLE_ADMIN'],
         })).replace(/=+$/, '');
         const forged = `${header}.${payload}.`;
+        const started = performance.now();
         const r = await fetch('/api/v1/tarefas', {
           headers: { Authorization: `Bearer ${forged}`, Accept: 'application/json' },
         });
+        const latencyMs = Math.round(performance.now() - started);
+        const responseText = await r.text();
+        reportTelemetry({ status: r.status, latencyMs });
         recordRequest({
           method: 'GET', url: '/api/v1/tarefas', headers: { Authorization: `Bearer ${maskToken(forged)}` },
-          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+          body: null, status: r.status, latencyMs, responseText,
         });
         return {
           ok: r.status === 401,
@@ -980,32 +1231,30 @@
         };
       },
     },
-    'sqli': {
+    sqli: {
       requireAuth: true,
-      run: async () => {
-        // C4: cursor injection. O endpoint /api/v1/tarefas decodifica `cursor` via
-        // CursorCodec antes de qualquer query, então o vetor SQL real está em
-        // PARAMETRIZAÇÃO de Spring Data JPA. Para honestamente comprovar a defesa,
-        // (1) snapshot, (2) ataque, (3) verifica que a tabela continua respondendo
-        // e ainda lista tarefas — DROP TABLE teria derrubado tudo.
+      run: async reportTelemetry => {
         const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' };
-
         const pre = await fetch('/api/v1/tarefas?limit=1', { headers });
         if (!pre.ok) {
+          reportTelemetry({ status: pre.status, latencyMs: 0 });
           return { ok: false, summary: `pre-check falhou (${pre.status}) — abortando`, expected: 'API responsiva antes do ataque' };
         }
 
         const payload = encodeURIComponent("'; DROP TABLE tarefas; --");
         const url = `/api/v1/tarefas?cursor=${payload}&limit=10`;
+        const started = performance.now();
         const r = await fetch(url, { headers });
+        const latencyMs = Math.round(performance.now() - started);
+        const responseText = await r.text();
+        reportTelemetry({ status: r.status, latencyMs });
         recordRequest({
           method: 'GET', url, headers: { Authorization: `Bearer ${accessToken}` },
-          body: null, status: r.status, latencyMs: 0, responseText: await r.text(),
+          body: null, status: r.status, latencyMs, responseText,
         });
 
         const post = await fetch('/api/v1/tarefas?limit=1', { headers });
         const tableIntact = post.ok;
-
         const cursorHandledSafely = r.status === 400 || r.ok;
         const ok = tableIntact && cursorHandledSafely;
         return {
@@ -1019,38 +1268,36 @@
     },
     'mass-assignment': {
       requireAuth: true,
-      run: async () => {
-        // C5: duas defesas válidas, ambas marcam OK:
-        //   A) Jackson com failOnUnknownProperties → 400 (camada de serialização).
-        //   B) DTO sem ownerId → 201, e a tarefa criada pertence ao usuário autenticado
-        //      (proxy: GET /tarefas/{id} retorna 200 para o owner).
+      run: async reportTelemetry => {
         const cat = categorias[0];
         if (!cat) {
+          reportTelemetry({ status: 0, latencyMs: 0 });
           return { ok: false, summary: 'sem categoria carregada — autentique e abra a aba Categorias antes', expected: 'autenticação + categorias carregadas' };
         }
 
-        const injectedOwner = '00000000-0000-0000-0000-000000000000';
         const body = {
           titulo: 'tentativa de mass assignment',
           descricao: 'payload tenta injetar ownerId e role',
           categoriaId: cat.id,
           dataHora: new Date(Date.now() + 86400000).toISOString(),
-          ownerId: injectedOwner,
+          ownerId: '00000000-0000-0000-0000-000000000000',
           role: 'ADMIN',
         };
+        const started = performance.now();
         const created = await fetch('/api/v1/tarefas', {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(body),
         });
+        const latencyMs = Math.round(performance.now() - started);
         const createdText = await created.text();
+        reportTelemetry({ status: created.status, latencyMs });
         recordRequest({
           method: 'POST', url: '/api/v1/tarefas',
           headers: { Authorization: `Bearer ${accessToken}` }, body,
-          status: created.status, latencyMs: 0, responseText: createdText,
+          status: created.status, latencyMs, responseText: createdText,
         });
 
-        // Defesa A: Jackson rejeita os campos extras (failOnUnknownProperties)
         if (created.status === 400) {
           return {
             ok: true,
@@ -1067,9 +1314,6 @@
           };
         }
 
-        // Defesa B: aceitou criar, mas tarefa pertence ao usuário autenticado.
-        // TarefaResponse intencionalmente não expõe ownerId (anti info-leak),
-        // então usamos 200 em GET como prova de propriedade.
         let persisted = null;
         try { persisted = JSON.parse(createdText); } catch (_) {}
         if (!persisted?.id) {
@@ -1110,8 +1354,12 @@
     verdict.className = 'demo-verdict running';
     verdict.textContent = 'atacando...';
     btn.disabled = true;
+    const started = performance.now();
+    let attackResult = { status: 0, latencyMs: 0 };
     try {
-      const result = await demo.run();
+      const result = await demo.run(meta => { attackResult = { ...attackResult, ...meta }; });
+      if (!attackResult.latencyMs) attackResult.latencyMs = Math.round(performance.now() - started);
+      await openTheater(name, result, attackResult, btn);
       verdict.className = `demo-verdict ${result.ok ? 'ok' : 'fail'}`;
       verdict.textContent = result.ok ? `OK · ${result.summary}` : `FALHOU · ${result.summary}`;
       toast(result.ok ? `${name}: defesa segurou` : `${name}: defesa NÃO segurou — esperado ${result.expected}`, result.ok ? 'ok' : 'err');

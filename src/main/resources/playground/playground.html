@@ -279,6 +279,32 @@
   </form>
 </dialog>
 
+<dialog id="intrusion-theater" class="intrusion-theater" aria-labelledby="theater-title" aria-describedby="theater-verdict">
+  <h2 id="theater-title" class="visually-hidden">Intrusion Theater</h2>
+  <div class="theater-scanlines" aria-hidden="true"></div>
+  <div class="theater-grid">
+    <section class="theater-panel theater-attacker" aria-labelledby="attacker-title">
+      <header class="theater-panel-head">
+        <span class="theater-dot red"></span>
+        <span class="theater-dot yellow"></span>
+        <span class="theater-dot green"></span>
+        <h3 id="attacker-title">attacker · pov</h3>
+      </header>
+      <pre id="theater-attacker-log" class="theater-log" aria-live="polite"></pre>
+    </section>
+    <section class="theater-panel theater-defense" aria-labelledby="defense-title">
+      <header class="theater-panel-head">
+        <span class="theater-shield" aria-hidden="true">🛡️</span>
+        <h3 id="defense-title">defense grid · target pov</h3>
+      </header>
+      <ul id="theater-defense-list" class="theater-defense-list" role="list"></ul>
+      <div id="theater-defense-detail" class="theater-defense-detail"></div>
+    </section>
+  </div>
+  <div id="theater-verdict" class="theater-verdict" role="status" aria-live="assertive"></div>
+  <button id="theater-close" class="theater-close" type="button">FECHAR · ESC</button>
+</dialog>
+
 <script src="/playground/assets/app.js" defer></script>
 </body>
 </html>
