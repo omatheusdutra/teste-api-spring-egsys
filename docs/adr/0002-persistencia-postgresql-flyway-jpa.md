@@ -1,30 +1,27 @@
-# ADR 0002: Persistencia PostgreSQL, Flyway e JPA
+# ADR 0002: Persistência PostgreSQL, Flyway e JPA
 
 ## Status
 
-Accepted
+Aceita
 
-## Context
+## Contexto
 
-A Etapa 2 precisa persistir categorias e tarefas em PostgreSQL real, sem H2, mantendo a arquitetura hexagonal: dominio
-puro, portas no dominio e adaptadores na infraestrutura. O modelo tambem precisa preparar o terreno para soft delete,
-auditoria e buscas eficientes.
+A API precisa persistir categorias e tarefas em PostgreSQL real, sem H2, mantendo domínio puro, portas no domínio e
+adaptadores na infraestrutura. O modelo também precisa suportar soft delete, auditoria e buscas eficientes.
 
-## Decision
+## Decisão
 
-Usar Flyway para criar e versionar o schema `categorias` e `tarefas`, com UUID como chave primaria, `ON DELETE RESTRICT`
-na relacao tarefa-categoria, checks de integridade e indices para categoria, status e listagens ativas por data.
+Usar Flyway para criar e versionar o schema, com UUID como chave primária, `ON DELETE RESTRICT` na relação
+tarefa-categoria, checks de integridade e índices para categoria, status e listagens ativas por data.
 
-As entidades JPA ficam restritas a `infrastructure.persistence.entity`. O dominio continua exposto apenas por
+As entidades JPA ficam restritas a `infrastructure.persistence.entity`. O domínio continua exposto apenas por
 `CategoriaRepository` e `TarefaRepository`, implementados por adaptadores Spring Data JPA. Mappers dedicados convertem
-entre entidades JPA e agregados de dominio, falhando explicitamente quando uma entidade persistida estiver incompleta.
+entre entidades JPA e agregados de domínio, falhando explicitamente quando uma entidade persistida estiver incompleta.
 
-Os testes de persistencia usam Testcontainers com `postgres:16-alpine`. Eles sao marcados com a tag `postgres`, e o
-Gradle exclui essa tag apenas quando `docker info` não estiver disponível no ambiente local. No CI com Docker, os testes
-rodam contra PostgreSQL real. Os contextos JPA sao descartados por classe para evitar reutilizar uma URL de container ja
-encerrado.
+Os testes de persistência usam Testcontainers com `postgres:16-alpine`. No CI com Docker, eles rodam contra PostgreSQL
+real.
 
-## Consequences
+## Consequências
 
 Não há divergência de comportamento causada por H2. A suíte de integração fica mais lenta que testes unitários puros,
 mas valida migrations, constraints, índices, mapeamento JPA e soft delete com o mesmo banco esperado em produção.

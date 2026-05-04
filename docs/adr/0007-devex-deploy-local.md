@@ -9,7 +9,7 @@ Aceita
 O avaliador precisa executar a API rapidamente, mas o projeto também deve demonstrar caminho plausível para produção:
 imagem enxuta, stack local realista, comandos comuns e pipeline automatizada.
 
-## Decisao
+## Decisão
 
 - Dockerfile multi-stage: build em `eclipse-temurin:21-jdk-alpine` e runtime distroless Java 21 non-root.
 - `docker-compose.yml` sobe API, PostgreSQL 16, Redis 7, Prometheus e Grafana.
@@ -18,8 +18,8 @@ imagem enxuta, stack local realista, comandos comuns e pipeline automatizada.
 - Coleção Bruno versionada cobre o tour mínimo: cadastro, login, criação e listagem de tarefas.
 - GitHub Actions separa CI principal de security workflow: build/test sempre rodam no push; scans rodam por PR ou demanda.
 
-## Consequencias
+## Consequências
 
 - A imagem final não contém JDK, Gradle, shell ou usuário root.
-- O compose local e adequado para avaliacao funcional, mas o scrape Prometheus da API exige preencher token admin local.
+- O compose local é adequado para avaliação funcional, mas o scrape Prometheus da API exige preencher token admin local.
 - Scans que dependem de bases externas ficam isolados em workflow próprio para reduzir flakiness do CI principal.
