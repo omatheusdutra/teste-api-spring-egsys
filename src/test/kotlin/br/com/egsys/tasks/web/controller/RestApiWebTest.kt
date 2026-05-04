@@ -165,6 +165,16 @@ class RestApiWebTest {
     }
 
     @Test
+    fun `gets task by id with null description`() {
+        every { buscarTarefa.execute(taskUuid, ownerUuid) } returns tarefa(descricao = null)
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/$taskUuid"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.descricao").doesNotExist())
+    }
+
+    @Test
     fun `lists tasks with cursor pagination`() {
         every { listarTarefas.execute(ownerUuid) } returns
             listOf(
@@ -191,6 +201,21 @@ class RestApiWebTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items[0].titulo").value("Mesmo instante"))
             .andExpect(jsonPath("$.items[1].titulo").value("Depois"))
+            .andExpect(jsonPath("$.nextCursor").doesNotExist())
+    }
+
+    @Test
+    fun `lists tasks after cursor excluding same instant ids before cursor`() {
+        val antesDoCursor = tarefa(titulo = "Antes", id = taskUuid, dataHora = futureDate)
+        val cursor = tarefa(titulo = "Cursor", id = taskUuidAfter, dataHora = futureDate)
+        val depois = tarefa(titulo = "Depois", id = taskUuidLater, dataHora = futureDate.plusSeconds(60))
+        every { listarTarefas.execute(ownerUuid) } returns listOf(depois, antesDoCursor, cursor)
+
+        mockMvc
+            .perform(get("/api/v1/tarefas").param("cursor", CursorCodec.encode(cursor)).param("limit", "10"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items.length()").value(1))
+            .andExpect(jsonPath("$.items[0].titulo").value("Depois"))
             .andExpect(jsonPath("$.nextCursor").doesNotExist())
     }
 
@@ -337,6 +362,32 @@ class RestApiWebTest {
     }
 
     @Test
+    fun `exports tasks as csv escaping quotes and line breaks`() {
+        every { listarTarefas.execute(ownerUuid) } returns
+            listOf(tarefa(titulo = "Pagar \"aluguel\"", descricao = "Linha 1\nLinha 2"))
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/export.csv"))
+            .andExpect(status().isOk)
+            .andExpect { result ->
+                result.response.contentAsString.contains("\"Pagar \"\"aluguel\"\"\"") shouldBe true
+                result.response.contentAsString.contains("\"Linha 1\nLinha 2\"") shouldBe true
+            }
+    }
+
+    @Test
+    fun `exports tasks as csv with empty description when description is absent`() {
+        every { listarTarefas.execute(ownerUuid) } returns listOf(tarefa(descricao = null))
+
+        mockMvc
+            .perform(get("/api/v1/tarefas/export.csv"))
+            .andExpect(status().isOk)
+            .andExpect { result ->
+                result.response.contentAsString.contains(",Pagar aluguel,,Casa,") shouldBe true
+            }
+    }
+
+    @Test
     fun `returns ProblemDetail for validation errors`() {
         mockMvc
             .perform(
@@ -433,6 +484,7 @@ class RestApiWebTest {
 
         fun tarefa(
             titulo: String = "Pagar aluguel",
+            descricao: String? = "Vencimento do contrato residencial",
             id: UUID = taskUuid,
             dataHora: Instant = futureDate,
             status: TarefaStatus = TarefaStatus.PENDENTE,
@@ -441,7 +493,7 @@ class RestApiWebTest {
                 id = TarefaId.from(id),
                 ownerId = UsuarioId.from(ownerUuid),
                 titulo = Titulo.of(titulo),
-                descricao = Descricao.of("Vencimento do contrato residencial"),
+                descricao = Descricao.of(descricao),
                 categoria = casa,
                 dataHora = DataHoraTarefa.existente(dataHora),
                 status = status,

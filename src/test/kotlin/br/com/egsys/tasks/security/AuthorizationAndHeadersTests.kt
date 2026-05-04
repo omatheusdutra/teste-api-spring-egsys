@@ -133,6 +133,17 @@ class AuthorizationAndHeadersTests {
             .andExpect(jsonPath("$.title").value("Nao autenticado"))
     }
 
+    @Test
+    fun `assets publicos da home e playground nao exigem autenticacao`() {
+        mockMvc
+            .perform(get("/assets/shared.css"))
+            .andExpect(status().isOk)
+
+        mockMvc
+            .perform(get("/assets/fonts/fonts.css"))
+            .andExpect(status().isOk)
+    }
+
     private fun authenticated(role: UserRole): AuthenticatedJwt {
         val principal =
             AuthenticatedPrincipal(

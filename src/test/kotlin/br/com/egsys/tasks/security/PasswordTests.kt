@@ -23,6 +23,13 @@ class PasswordTests {
     }
 
     @Test
+    fun `senha sem letra minuscula rejeitada`() {
+        shouldThrow<WeakPasswordException> {
+            policy.validate("SENHA-FRACA-123!")
+        }
+    }
+
+    @Test
     fun `senha sem numero rejeitada`() {
         shouldThrow<WeakPasswordException> {
             policy.validate("Senha-forte-sem-numero!")
