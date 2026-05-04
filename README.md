@@ -105,6 +105,30 @@ Garantias do frontend:
 
 Decisão arquitetural: [ADR 0009](docs/adr/0009-playground-production-demo-controlled.md).
 
+### 🎬 Intrusion Theater
+
+Ao acionar qualquer botão do painel "Provoque a defesa", uma overlay cinematográfica
+toma a tela e dramatiza o ataque em três fases — **boot/recon → payload → veredito** —
+mostrando em paralelo o terminal do atacante e o grid de defesas que estão checando a
+requisição. O ataque por baixo é o mesmo `fetch` real contra a própria API: o teatro
+apenas **visualiza** o que a API recebeu e respondeu. O `status code` exibido é o
+retornado pelo servidor; a latência exibida é a medida via `performance.now()`.
+
+Como ativar e fechar:
+
+- requer `egsys.playground.attack-demos-enabled=true` (ligado por padrão em
+  `dev`/`local`, desligado em `prod`);
+- abre automaticamente ao clicar em qualquer demo;
+- fecha pelo botão "FECHAR · ESC", pela tecla `Esc`, ou clicando no backdrop;
+- ao fechar, o foco retorna para o botão da demo que abriu o teatro;
+- respeita `prefers-reduced-motion`: scanlines, glitch, pulse e cursor piscante são
+  desligados, mas o conteúdo continua sendo apresentado instantaneamente.
+
+Cobertura de regressão em
+[PlaygroundFrontendTest.kt](src/test/kotlin/br/com/egsys/tasks/playground/PlaygroundFrontendTest.kt)
+garante que o teatro continue (i) gating-friendly, (ii) acessível, (iii) usando
+telemetria real e (iv) sem violar a CSP.
+
 Screenshots da validação visual:
 
 - [Desktop completo](docs/screenshots/playground/desktop-playground.png)
