@@ -36,7 +36,7 @@ code, pre { font-family: var(--font-mono); }
 .aurora { position: fixed; inset: 0; z-index: -3; pointer-events: none; overflow: hidden; }
 .aurora::before, .aurora::after, .aurora .blob {
   content: ''; position: absolute; border-radius: 50%;
-  filter: blur(120px); opacity: 0.35;
+  filter: blur(120px); opacity: 0.48;
   animation: float 22s ease-in-out infinite;
 }
 .aurora::before { width: 520px; height: 520px;
@@ -59,29 +59,17 @@ code, pre { font-family: var(--font-mono); }
     linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
   background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 80%);
 }
 
-.topbar {
+.playground-header {
   position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
   padding: 14px 28px;
   background: rgba(5, 7, 13, 0.78);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand-link {
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 10px; transition: transform 0.15s ease, filter 0.15s ease;
-}
-.brand-link:hover { transform: translateY(-1px); filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.35)); }
-.brand-logo { width: 32px; height: 32px; }
-.brand-title { font-weight: 600; font-size: 15px; letter-spacing: 0.2px; }
-.brand-sub { color: var(--text-3); font-size: 12px; }
-.brand-sub code { color: var(--orange); font-size: 12px; }
-.topbar-right { display: flex; gap: 10px; align-items: center; }
 .health-pill {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 5px 10px; border-radius: 999px;

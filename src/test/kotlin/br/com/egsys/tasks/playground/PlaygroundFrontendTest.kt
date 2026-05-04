@@ -86,7 +86,7 @@ class PlaygroundFrontendTest {
     @Test
     fun `html anuncia demo controlada e não indexa em buscadores`() {
         html.shouldContain("noindex")
-        html.shouldContain("demo controlada")
+        html.shouldContain("production mindset em modo demonstrável")
     }
 
     @Test
@@ -183,10 +183,14 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `brand-sub usa code para aproveitar regra visual sem css morto`() {
-        html.shouldContain("<code>memória</code>")
-        html.shouldContain("<code>sandbox</code>")
-        css.shouldContain(".brand-sub code")
+    fun `playground usa app header compartilhado com links principais`() {
+        html.shouldContain("class=\"app-header playground-header\"")
+        html.shouldContain("class=\"brand-wordmark\"")
+        html.shouldContain("Home")
+        html.shouldContain("Playground")
+        html.shouldContain("API Docs")
+        html.shouldContain("LinkedIn")
+        html.shouldContain("GitHub")
     }
 
     @Test
@@ -216,16 +220,16 @@ class PlaygroundFrontendTest {
 
     @Test
     fun `painel de defesa mostra aviso sandbox controlado`() {
-        html.shouldContain("Sandbox controlado")
-        html.shouldContain("Nenhum dado real é afetado")
+        html.shouldContain("Ambiente sob controle")
+        html.shouldContain("dados são descartáveis")
         css.shouldContain(".sandbox-banner")
     }
 
     @Test
     fun `logo do playground volta para home publica`() {
         html.shouldContain("href=\"/\"")
-        html.shouldContain("aria-label=\"Voltar para a home\"")
-        html.shouldContain("class=\"brand-link\"")
+        html.shouldContain("aria-label=\"EGSYS Tasks API\"")
+        html.shouldContain("class=\"brand\"")
     }
 
     @Test

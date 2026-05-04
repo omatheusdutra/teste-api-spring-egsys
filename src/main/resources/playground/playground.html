@@ -8,23 +8,30 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none';">
 <title>EGSYS Tasks API · Playground</title>
 <link rel="icon" href="/egsys-logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/shared.css">
 <link rel="stylesheet" href="/playground/assets/styles.css">
 </head>
 <body>
 <div class="aurora"><span class="blob"></span></div>
 <div class="grid-overlay"></div>
 
-<header class="topbar">
-  <div class="brand">
-    <a class="brand-link" href="/" aria-label="Voltar para a home">
-      <img src="/egsys-logo.svg" alt="EGSYS" class="brand-logo">
-    </a>
-    <div>
-      <div class="brand-title">Tasks API · Playground</div>
-      <div class="brand-sub">demo controlada · tokens em <code>memória</code> · ataques apenas em <code>sandbox</code></div>
+<header class="app-header playground-header">
+  <a class="brand" href="/" aria-label="EGSYS Tasks API">
+    <img src="/egsys-logo.svg" alt="" class="brand-logo">
+    <div class="brand-wordmark">
+      <div class="brand-name">eg<span>SYS</span></div>
+      <div class="brand-context">production mindset em modo demonstrável</div>
     </div>
-  </div>
-  <div class="topbar-right">
+  </a>
+  <nav class="app-nav" aria-label="Navegação principal">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/playground">Playground</a>
+    <a class="nav-link" href="/swagger-ui.html">API Docs</a>
+    <a class="nav-link" href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">LinkedIn</a>
+    <a class="nav-link" href="https://github.com/omatheusdutra/teste-api-spring-egsys" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <div class="page-controls">
     <button id="lang-toggle" class="btn btn-ghost compact-btn" type="button" aria-label="Alternar idioma">PT</button>
     <span id="health-pill" class="health-pill health-unknown" title="health pendente">health: --</span>
     <span id="auth-badge" class="badge badge-muted">sem token</span>
@@ -61,11 +68,11 @@
 
     <div class="card defense-demos" id="defense-demos-card">
       <header class="card-header">
-        <h2>Provoque uma defesa</h2>
-        <span class="hint">cada botão ataca a própria API e mostra se a defesa segurou</span>
+        <h2>Provoque a defesa · veja segurando ao vivo</h2>
+        <span class="hint">cada botão dispara um ataque real contra esta API. assista a defesa segurar.</span>
       </header>
       <p class="sandbox-banner">
-        🧪 Sandbox controlado — todos os ataques são contra a própria API local. Nenhum dado real é afetado. Use à vontade.
+        🧪 Ambiente sob controle · ataques são reais, dados são descartáveis · use à vontade.
       </p>
       <p id="defense-demos-disabled" class="demo-disabled-message" hidden>
         Demonstrações ofensivas disponíveis apenas em ambiente controlado.
@@ -205,6 +212,19 @@
     </div>
   </aside>
 </main>
+
+<footer class="mini-footer">
+  <a class="footer-brand-mini" href="/" aria-label="EGSYS Tasks API">
+    <img src="/egsys-logo.svg" alt="">
+    <span>eg<span style="color: var(--cyan);">SYS</span></span>
+  </a>
+  <span>Construído com foco no desafio EGSYS · production mindset sob demonstração</span>
+  <div class="footer-links-mini">
+    <a href="https://br.linkedin.com/company/egsys" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://github.com/omatheusdutra/teste-api-spring-egsys" target="_blank" rel="noopener">GitHub</a>
+    <a href="/swagger-ui.html">API Docs</a>
+  </div>
+</footer>
 
 <footer class="defense-bar" aria-live="polite">
   <span class="pill" id="pill-rate">rate limit: --</span>
