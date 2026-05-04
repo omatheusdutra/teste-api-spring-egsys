@@ -187,12 +187,15 @@ class PlaygroundFrontendTest {
     }
 
     @Test
-    fun `playground usa app header compartilhado com links principais`() {
+    fun `playground usa app header com marca e controles operacionais`() {
         html.shouldContain("class=\"app-header playground-header\"")
         html.shouldContain("class=\"brand-wordmark\"")
-        html.shouldContain("Home")
-        html.shouldContain("Playground")
-        html.shouldContain("API Docs")
+        html.shouldContain("class=\"page-controls\"")
+        html.shouldContain("id=\"lang-toggle\"")
+        html.shouldContain("id=\"health-pill\"")
+        html.shouldContain("id=\"auth-badge\"")
+        html.contains("class=\"app-nav\"").let { check(!it) }
+        html.contains("<a class=\"nav-link\"").let { check(!it) }
         html.shouldContain("LinkedIn")
         html.shouldContain("GitHub")
     }

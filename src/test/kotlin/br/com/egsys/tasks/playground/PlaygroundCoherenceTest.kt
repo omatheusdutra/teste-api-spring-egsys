@@ -23,19 +23,31 @@ class PlaygroundCoherenceTest {
     }
 
     @Test
-    fun `home e playground usam a mesma estrutura de app header`() {
+    fun `home e playground compartilham marca e header base`() {
         listOf(homeHtml, playgroundHtml).forEach { html ->
             html.shouldContain("class=\"app-header")
             html.shouldContain("class=\"brand-wordmark\"")
             html.shouldContain("class=\"brand-name\"")
             html.shouldContain("class=\"brand-context\"")
-            html.shouldContain("class=\"app-nav\"")
-            html.shouldContain("href=\"/\"")
-            html.shouldContain("href=\"/playground\"")
-            html.shouldContain("href=\"/swagger-ui.html\"")
-            html.shouldContain("https://br.linkedin.com/company/egsys")
-            html.shouldContain("https://github.com/omatheusdutra/teste-api-spring-egsys")
         }
+    }
+
+    @Test
+    fun `home exibe navegacao publica principal`() {
+        homeHtml.shouldContain("class=\"app-nav\"")
+        homeHtml.shouldContain("href=\"/\"")
+        homeHtml.shouldContain("href=\"/playground\"")
+        homeHtml.shouldContain("href=\"/swagger-ui.html\"")
+        homeHtml.shouldContain("https://br.linkedin.com/company/egsys")
+        homeHtml.shouldContain("https://github.com/omatheusdutra/teste-api-spring-egsys")
+    }
+
+    @Test
+    fun `playground prioriza controles operacionais no topo`() {
+        playgroundHtml.shouldContain("class=\"page-controls\"")
+        playgroundHtml.contains("class=\"app-nav\"").let { check(!it) }
+        playgroundHtml.contains("<a class=\"nav-link\"").let { check(!it) }
+        playgroundHtml.shouldContain("href=\"/\"")
     }
 
     @Test

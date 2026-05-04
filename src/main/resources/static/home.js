@@ -144,8 +144,8 @@
     { t: '<span class="t-comment"># 3) criar tarefa autenticada</span>', delay: 500 },
     { t: '<span class="t-prompt">$</span> curl -X POST <span class="t-string">http://localhost:8080/api/v1/tarefas</span> \\', delay: 600 },
     { t: '    <span class="t-flag">-H</span> <span class="t-string">"Authorization: Bearer $TOKEN"</span> \\', delay: 400 },
-    { t: '    <span class="t-flag">-d</span> <span class="t-string">\'{"titulo":"Surpreender avaliador","categoriaId":"...","dataHora":"2026-05-10T09:00:00Z"}\'</span>', delay: 700 },
-    { t: '<span class="t-output">→ </span><span class="t-success">201 Created</span> <span class="t-output">· P99 38ms · jti registrado · evento publicado</span>', delay: 1200, plain: true }
+    { t: '    <span class="t-flag">-d</span> <span class="t-string">\'{"titulo":"Dev EGSYS","categoriaId":"...","dataHora":"2026-05-10T09:00:00Z"}\'</span>', delay: 700 },
+    { t: '<span class="t-output">→ </span><span class="t-success">201 Created</span> <span class="t-output">· auditoria registrada · evento publicado</span>', delay: 1200, plain: true }
   ];
 
   let idx = 0;
