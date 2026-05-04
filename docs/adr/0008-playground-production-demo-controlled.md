@@ -1,4 +1,4 @@
-# ADR 0009 - Playground como demo controlada por propriedades
+# ADR 0008 - Playground como demo controlada por propriedades
 
 ## Status
 

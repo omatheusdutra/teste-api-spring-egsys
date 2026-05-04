@@ -185,7 +185,7 @@ Rel(infra, redis, "RESP")
 | [0005](docs/adr/0005-observabilidade-prometheus-otel.md) | Observabilidade com logs JSON, Prometheus e OTLP |
 | [0006](docs/adr/0006-inovacoes-outbox-historico-status-csv.md) | Outbox, histórico, status e CSV |
 | [0007](docs/adr/0007-devex-deploy-local.md) | DevEx e deploy local |
-| [0009](docs/adr/0009-playground-production-demo-controlled.md) | Playground como demo controlada por propriedades |
+| [0008](docs/adr/0008-playground-production-demo-controlled.md) | Playground como demo controlada por propriedades |
 
 ## 🗺️ Roadmap Futuro
 
