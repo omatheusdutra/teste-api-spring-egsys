@@ -13,6 +13,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.mock.env.MockEnvironment
+import java.security.KeyPairGenerator
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -100,6 +101,27 @@ class AuthenticationTests {
         }
     }
 
+    @Test
+    fun `deve carregar chaves RSA PEM com quebras escapadas por env`() {
+        val pair =
+            KeyPairGenerator
+                .getInstance("RSA")
+                .apply { initialize(2048) }
+                .generateKeyPair()
+        val configured =
+            SecurityProperties(
+                jwt =
+                    JwtProperties(
+                        privateKey = pem("PRIVATE KEY", pair.private.encoded).replace("\n", "\\n"),
+                        publicKey = pem("PUBLIC KEY", pair.public.encoded).replace("\n", "\\n"),
+                    ),
+            )
+        val provider = JwtKeyProvider(configured, MockEnvironment().withProperty("spring.profiles.active", "prod"))
+
+        provider.privateKey().encoded shouldBe pair.private.encoded
+        provider.publicKey().encoded shouldBe pair.public.encoded
+    }
+
     private fun signedToken(
         issuer: String = properties.jwt.issuer,
         audience: String = properties.jwt.audience,
@@ -129,5 +151,13 @@ class AuthenticationTests {
     private fun base64(value: String): String {
         val bytes = value.toByteArray()
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
+    private fun pem(
+        label: String,
+        bytes: ByteArray,
+    ): String {
+        val encoded = Base64.getMimeEncoder(64, "\n".toByteArray()).encodeToString(bytes)
+        return "-----BEGIN $label-----\n$encoded\n-----END $label-----"
     }
 }

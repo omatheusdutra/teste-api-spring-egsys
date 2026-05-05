@@ -51,8 +51,9 @@ class JwtKeyProvider(
     }
 
     private fun decodePem(value: String): ByteArray {
+        val normalized = value.replace("\\n", "\n")
         val sanitized =
-            value
+            normalized
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replace("-----BEGIN PUBLIC KEY-----", "")

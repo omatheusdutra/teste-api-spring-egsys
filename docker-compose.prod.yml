@@ -1,0 +1,70 @@
+services:
+  teste-api-spring-egsys:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: teste-api-spring-egsys:${IMAGE_TAG:-prod}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      EGSYS_DB_URL: jdbc:postgresql://postgres:5432/egsys_tasks
+      EGSYS_DB_USERNAME: egsys_app
+      EGSYS_DB_PASSWORD: ${EGSYS_DB_PASSWORD:?configure EGSYS_DB_PASSWORD}
+      EGSYS_REDIS_HOST: redis
+      EGSYS_REDIS_PORT: 6379
+      EGSYS_REDIS_PASSWORD: ${EGSYS_REDIS_PASSWORD:?configure EGSYS_REDIS_PASSWORD}
+      EGSYS_REDIS_SSL: "false"
+      EGSYS_ALLOWED_ORIGINS: ${EGSYS_ALLOWED_ORIGINS:?configure EGSYS_ALLOWED_ORIGINS}
+      EGSYS_PASSWORD_PEPPER: ${EGSYS_PASSWORD_PEPPER:?configure EGSYS_PASSWORD_PEPPER}
+      EGSYS_JWT_PRIVATE_KEY: ${EGSYS_JWT_PRIVATE_KEY:?configure EGSYS_JWT_PRIVATE_KEY}
+      EGSYS_JWT_PUBLIC_KEY: ${EGSYS_JWT_PUBLIC_KEY:?configure EGSYS_JWT_PUBLIC_KEY}
+      EGSYS_TRACING_SAMPLE_PROBABILITY: ${EGSYS_TRACING_SAMPLE_PROBABILITY:-0.0}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318/v1/traces}
+    ports:
+      - "${EGSYS_APP_BIND:-127.0.0.1}:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: egsys_tasks
+      POSTGRES_USER: egsys_app
+      POSTGRES_PASSWORD: ${EGSYS_DB_PASSWORD:?configure EGSYS_DB_PASSWORD}
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U egsys_app -d egsys_tasks"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$${EGSYS_REDIS_PASSWORD}\""]
+    environment:
+      EGSYS_REDIS_PASSWORD: ${EGSYS_REDIS_PASSWORD:?configure EGSYS_REDIS_PASSWORD}
+    volumes:
+      - redis-prod-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${EGSYS_REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-prod-data:
+  redis-prod-data:

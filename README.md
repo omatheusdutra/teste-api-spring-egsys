@@ -54,6 +54,19 @@ SPRING_PROFILES_ACTIVE=dev EGSYS_DB_PASSWORD=egsys_local_password ./gradlew boot
 
 Comandos curtos também estão no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
 
+## 🚀 Deploy Demo
+
+Para publicar uma demo controlada em `prod`, use o Compose dedicado:
+
+```bash
+cp deploy/demo.env.example deploy/demo.env
+# edite deploy/demo.env com secrets reais
+docker compose --env-file deploy/demo.env -f docker-compose.prod.yml up -d --build
+```
+
+Esse modo mantém `/playground` disponível como tour técnico, mas bloqueia as demonstrações ofensivas. Publique atrás de HTTPS
+com reverse proxy apontando para `127.0.0.1:8080`. O passo a passo operacional fica em [deploy/README.md](deploy/README.md).
+
 ## ⚡ Tour de 30s
 
 1. Abra `http://localhost:8080` e clique em **Abrir Playground Interativo**, ou acesse `http://localhost:8080/playground`.
