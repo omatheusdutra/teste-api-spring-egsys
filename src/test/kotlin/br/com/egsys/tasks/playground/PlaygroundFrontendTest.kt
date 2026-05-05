@@ -70,6 +70,30 @@ class PlaygroundFrontendTest {
     }
 
     @Test
+    fun `modal de confirmacao fica centralizado`() {
+        css.shouldContain("dialog#confirm-dialog")
+        css.shouldContain("margin: auto")
+        css.shouldContain("position: fixed")
+        css.shouldContain("inset: 0")
+    }
+
+    @Test
+    fun `reset limpa estado local e campos visuais da sessao`() {
+        js.shouldContain("function resetLocalSession")
+        js.shouldContain("function resetForms")
+        js.shouldContain("function resetRequestResponsePanels")
+        js.shouldContain("function resetMetricsPanel")
+        js.shouldContain("function resetDemoVerdicts")
+        js.shouldContain("form.reset()")
+        js.shouldContain("taskSearch = ''")
+        js.shouldContain("lastRequest = null")
+        js.shouldContain("auditLog.length = 0")
+        js.shouldContain("defenseStats.rateLimit.current = 0")
+        js.shouldContain("defenseStats.lastTriggered = null")
+        js.shouldContain("sessão local resetada")
+    }
+
+    @Test
     fun `js usa textContent ou createElement para renderizar conteúdo`() {
         // proxy positivo: garante que houve esforço explícito de escape estrutural
         js.shouldContain("textContent")

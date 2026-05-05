@@ -952,20 +952,80 @@
 
   $('#lang-toggle').addEventListener('click', toggleLanguage);
 
-  $('#reset-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, async () => {
-    if (!(await confirmAction('Limpar tokens em memória, listas e auditoria da sessão?'))) return;
-    clearTokens();
-    tarefas = []; categorias = [];
-    pendingDeleteTimers.forEach(timer => clearTimeout(timer));
-    pendingDeleteTimers.clear();
-    auditLog.length = 0;
-    renderTarefas(); renderCategorias(); renderAudit();
-    $('#req-method').replaceChildren(el('span', { class: 'badge badge-muted' }, ['--']), ' ', el('span', {}, ['aguardando...']));
+  function resetRequestResponsePanels() {
+    lastRequest = null;
+    $('#req-method').replaceChildren(el('span', { class: 'badge badge-muted' }, ['--']), ' ', el('span', { id: 'req-url' }, ['aguardando...']));
     $('#req-headers').textContent = '--';
     $('#req-body').textContent = '--';
     $('#res-meta').textContent = '--';
     $('#res-body').textContent = '--';
-    toast('estado resetado', 'ok');
+    $('#copy-curl').disabled = true;
+    $('#repeat-req').disabled = true;
+  }
+
+  function resetMetricsPanel() {
+    if (metricsTimer) {
+      clearTimeout(metricsTimer);
+      metricsTimer = null;
+    }
+    latencyHistory.length = 0;
+    $('#m-rps').textContent = '--';
+    $('#m-p95').textContent = '--';
+    $('#m-4xx').textContent = '--';
+    $('#m-5xx').textContent = '--';
+    $('#metrics-hint').textContent = 'faça login com um usuário que tenha role ADMIN para ver dados.';
+    $('#latency-sparkline').replaceChildren();
+    $('#latency-sparkline').classList.remove('latency-hot', 'latency-warn');
+  }
+
+  function resetDemoVerdicts() {
+    $$('.demo-verdict').forEach(verdict => {
+      verdict.className = 'demo-verdict';
+      verdict.textContent = 'aguardando';
+    });
+    $$('.demo-btn').forEach(btn => {
+      btn.disabled = playgroundConfig.attackDemosEnabled !== true;
+    });
+  }
+
+  function resetForms() {
+    ['#register-form', '#login-form', '#tarefa-form', '#edit-form'].forEach(selector => {
+      const form = $(selector);
+      if (form) form.reset();
+    });
+    taskSearch = '';
+    $('#task-search').value = '';
+    populateCategoriaSelects();
+    document.querySelector('dialog[open]')?.close('reset');
+  }
+
+  function resetLocalSession() {
+    clearTokens();
+    tarefas = []; categorias = [];
+    pendingDeleteTimers.forEach(timer => clearTimeout(timer));
+    pendingDeleteTimers.clear();
+    if (rateLimitResetTimer) {
+      clearTimeout(rateLimitResetTimer);
+      rateLimitResetTimer = null;
+    }
+    defenseStats.rateLimit.current = 0;
+    defenseStats.lastTriggered = null;
+    auditLog.length = 0;
+    resetForms();
+    renderTarefas();
+    renderCategorias();
+    renderAudit();
+    resetRequestResponsePanels();
+    resetMetricsPanel();
+    resetDemoVerdicts();
+    renderDefenseBar();
+    refreshHealth();
+  }
+
+  $('#reset-btn').addEventListener('click', ev => withLoadingState(ev.currentTarget, async () => {
+    if (!(await confirmAction('Limpar tokens em memória, campos, listas e auditoria desta sessão?'))) return;
+    resetLocalSession();
+    toast('sessão local resetada', 'ok');
   }));
 
   // ============================================================
