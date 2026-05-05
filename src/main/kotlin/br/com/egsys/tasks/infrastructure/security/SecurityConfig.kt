@@ -68,6 +68,9 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.GET, "/home.js").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/egsys-logo.svg").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
+                // Public by design: platform load balancers need a lightweight readiness signal.
+                // Health details remain disabled; metrics and business endpoints stay authenticated.
+                it.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 // Playground is feature-flagged by egsys.playground.enabled. The static resource lives outside
                 // /static/, so there is no path that bypasses the property-controlled controller.
                 it.requestMatchers(HttpMethod.GET, "/playground", "/playground/**").permitAll()

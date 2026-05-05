@@ -134,6 +134,13 @@ class AuthorizationAndHeadersTests {
     }
 
     @Test
+    fun `health publico nao exige autenticacao`() {
+        mockMvc
+            .perform(get("/actuator/health/liveness"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
     fun `assets publicos da home e playground nao exigem autenticacao`() {
         mockMvc
             .perform(get("/assets/shared.css"))

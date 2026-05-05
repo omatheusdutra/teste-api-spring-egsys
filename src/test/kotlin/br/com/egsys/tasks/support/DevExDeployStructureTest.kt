@@ -37,7 +37,7 @@ class DevExDeployStructureTest {
         blueprint shouldContain "EGSYS_REDIS_URL"
         blueprint shouldContain "EGSYS_JWT_PRIVATE_KEY"
         blueprint shouldContain "sync: false"
-        blueprint shouldContain "healthCheckPath: /actuator/health"
+        blueprint shouldContain "healthCheckPath: /actuator/health/liveness"
     }
 
     @Test
