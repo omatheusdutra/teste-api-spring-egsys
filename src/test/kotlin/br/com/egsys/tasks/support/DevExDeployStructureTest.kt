@@ -51,6 +51,14 @@ class DevExDeployStructureTest {
     }
 
     @Test
+    fun `spring boot default user auto configuration is disabled`() {
+        val application = Path("src/main/kotlin/br/com/egsys/tasks/TasksApplication.kt").readText()
+
+        application shouldContain "UserDetailsServiceAutoConfiguration"
+        application shouldContain "@SpringBootApplication(exclude = [UserDetailsServiceAutoConfiguration::class])"
+    }
+
+    @Test
     fun `devex helpers and api collection are committed`() {
         Path("Makefile").readText() shouldContain "check:"
         Path("bruno/egsys-tasks-api/bruno.json").readText() shouldContain "EGSYS Tasks API"
