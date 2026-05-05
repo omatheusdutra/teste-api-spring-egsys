@@ -56,7 +56,15 @@ Comandos curtos também estão no `Makefile`: `make check`, `make pitest`, `make
 
 ## 🚀 Deploy Demo
 
-Para publicar uma demo controlada em `prod`, use o Compose dedicado:
+Para publicar uma demo controlada na Render, use o Blueprint versionado:
+
+1. No Dashboard da Render, abra **Blueprints**.
+2. Crie uma instância a partir deste repositório.
+3. Preencha `EGSYS_JWT_PRIVATE_KEY` e `EGSYS_JWT_PUBLIC_KEY`.
+4. Aguarde a criação do Web Service, PostgreSQL e Key Value.
+5. Valide `/playground/config` com `attackDemosEnabled=false`.
+
+Para publicar em VPS própria, use o Compose dedicado:
 
 ```bash
 cp deploy/demo.env.example deploy/demo.env
@@ -65,7 +73,7 @@ docker compose --env-file deploy/demo.env -f docker-compose.prod.yml up -d --bui
 ```
 
 Esse modo mantém `/playground` disponível como tour técnico, mas bloqueia as demonstrações ofensivas. Publique atrás de HTTPS
-com reverse proxy apontando para `127.0.0.1:8080`. O passo a passo operacional fica em [deploy/README.md](deploy/README.md).
+com reverse proxy apontando para `127.0.0.1:8080` quando usar VPS. O passo a passo operacional fica em [deploy/README.md](deploy/README.md).
 
 ## ⚡ Tour de 30s
 

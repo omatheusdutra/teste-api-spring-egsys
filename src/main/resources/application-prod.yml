@@ -3,16 +3,12 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: ${EGSYS_DB_URL}
+    url: jdbc:postgresql://${EGSYS_DB_HOST}:${EGSYS_DB_PORT:5432}/${EGSYS_DB_NAME}
     username: ${EGSYS_DB_USERNAME}
     password: ${EGSYS_DB_PASSWORD}
   data:
     redis:
-      host: ${EGSYS_REDIS_HOST}
-      port: ${EGSYS_REDIS_PORT:6379}
-      password: ${EGSYS_REDIS_PASSWORD}
-      ssl:
-        enabled: ${EGSYS_REDIS_SSL:true}
+      url: ${EGSYS_REDIS_URL}
   jpa:
     hibernate:
       ddl-auto: validate

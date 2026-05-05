@@ -1,0 +1,71 @@
+# Render Blueprint for the public demo deployment.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: keyvalue
+    name: egsys-tasks-redis
+    region: oregon
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+  - type: web
+    name: egsys-tasks-api
+    runtime: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: commit
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_FORWARD_HEADERS_STRATEGY
+        value: framework
+      - key: EGSYS_DB_HOST
+        fromDatabase:
+          name: egsys-tasks-postgres
+          property: host
+      - key: EGSYS_DB_PORT
+        fromDatabase:
+          name: egsys-tasks-postgres
+          property: port
+      - key: EGSYS_DB_NAME
+        fromDatabase:
+          name: egsys-tasks-postgres
+          property: database
+      - key: EGSYS_DB_USERNAME
+        fromDatabase:
+          name: egsys-tasks-postgres
+          property: user
+      - key: EGSYS_DB_PASSWORD
+        fromDatabase:
+          name: egsys-tasks-postgres
+          property: password
+      - key: EGSYS_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: egsys-tasks-redis
+          property: connectionString
+      - key: EGSYS_ALLOWED_ORIGINS
+        value: https://egsys-tasks-api.onrender.com
+      - key: EGSYS_PASSWORD_PEPPER
+        generateValue: true
+      - key: EGSYS_JWT_PRIVATE_KEY
+        sync: false
+      - key: EGSYS_JWT_PUBLIC_KEY
+        sync: false
+      - key: EGSYS_TRACING_SAMPLE_PROBABILITY
+        value: "0.0"
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://localhost:4318/v1/traces
+
+databases:
+  - name: egsys-tasks-postgres
+    region: oregon
+    plan: free
+    postgresMajorVersion: "16"
+    databaseName: egsys_tasks
+    user: egsys_app
+    ipAllowList: []

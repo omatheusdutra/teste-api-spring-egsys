@@ -28,6 +28,7 @@ spring:
     enabled: true
 
 server:
+  port: ${PORT:8080}
   compression:
     enabled: true
     mime-types: application/json,text/plain,text/css,application/javascript
