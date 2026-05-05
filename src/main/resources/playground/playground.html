@@ -298,6 +298,21 @@
   <button id="theater-close" class="theater-close" type="button">FECHAR · ESC</button>
 </dialog>
 
+<dialog id="access-denied-dialog" aria-labelledby="access-denied-title" aria-describedby="access-denied-reason">
+  <div class="access-denied-scanlines" aria-hidden="true"></div>
+  <div class="access-denied-content">
+    <div class="access-denied-x" aria-hidden="true">
+      <span class="access-denied-ring"></span>
+    </div>
+    <h2 id="access-denied-title" class="access-denied-title">ACCESS DENIED</h2>
+    <p id="access-denied-reason" class="access-denied-reason">
+      Credenciais inválidas. Verifique email e senha e tente novamente.
+    </p>
+    <div class="access-denied-meta" aria-hidden="true"></div>
+    <button type="button" class="access-denied-close">FECHAR · ESC</button>
+  </div>
+</dialog>
+
 <script src="/playground/assets/app.js" defer></script>
 </body>
 </html>

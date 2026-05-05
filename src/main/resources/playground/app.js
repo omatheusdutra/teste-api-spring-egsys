@@ -145,6 +145,41 @@
     return 'Demonstrações ofensivas disponíveis apenas em ambiente controlado.';
   }
 
+  function isAuthError(err) {
+    const status = Number(err?.status || err?.statusCode || 0);
+    return status === 401 || status === 403;
+  }
+
+  function showAccessDenied(reason, meta = {}) {
+    const dlg = $('#access-denied-dialog');
+    if (!dlg) return;
+    $('#access-denied-reason').textContent = reason || 'Credenciais inválidas. Verifique email e senha e tente novamente.';
+    const metaHost = $('.access-denied-meta', dlg);
+    const defaults = {
+      status: meta.status || '401',
+      attempt: meta.attempt || new Date().toLocaleTimeString('pt-BR'),
+      origin: meta.origin || 'auth/login',
+    };
+    metaHost.replaceChildren(...Object.entries(defaults).map(([key, value]) =>
+      el('span', {}, [`${key}: ${value}`])
+    ));
+    if (typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal();
+    clearTimeout(showAccessDenied.closeTimer);
+    showAccessDenied.closeTimer = setTimeout(() => {
+      if (dlg.open) dlg.close('timeout');
+    }, 6000);
+  }
+
+  function wireAccessDeniedDialog() {
+    const dlg = $('#access-denied-dialog');
+    if (!dlg) return;
+    $('.access-denied-close', dlg)?.addEventListener('click', () => dlg.close('close'));
+    dlg.addEventListener('click', ev => {
+      if (ev.target === dlg) dlg.close('backdrop');
+    });
+    dlg.addEventListener('close', () => clearTimeout(showAccessDenied.closeTimer));
+  }
+
   async function loadPlaygroundConfig() {
     applyPlaygroundConfig();
     try {
@@ -711,14 +746,30 @@
 
   function renderCategorias() {
     const host = $('#categoria-list');
-    host.replaceChildren(...categorias.map(c =>
-      el('div', { class: 'task-row' }, [
-        el('div', {}, [
+    host.replaceChildren(...categorias.map(c => {
+      const copy = el('button', { class: 'cat-copy-btn', type: 'button' }, ['Copiar id']);
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(c.id);
+          copy.textContent = 'Copiado ✓';
+          copy.classList.add('copied');
+          setTimeout(() => {
+            copy.textContent = 'Copiar id';
+            copy.classList.remove('copied');
+          }, 1400);
+        } catch (_) {
+          toast('falha ao copiar', 'err');
+        }
+      });
+      return el('div', { class: 'task-row' }, [
+        el('div', { class: 'cat-icon', 'aria-hidden': 'true' }, [(c.descricao || '?').trim().charAt(0).toUpperCase() || '?']),
+        el('div', { class: 'cat-info' }, [
           el('div', { class: 'task-title' }, [c.descricao]),
-          el('div', { class: 'task-meta' }, [`id: ${c.id}`]),
+          el('div', { class: 'task-meta', title: c.id }, [`id: ${c.id}`]),
         ]),
-      ])
-    ));
+        copy,
+      ]);
+    }));
   }
 
   async function loadTarefas() {
@@ -873,9 +924,18 @@
           password: form.elements.password.value,
         }, { auth: false });
         setTokens(resp);
-        toast('registrado e autenticado', 'ok');
+        toast('cadastro realizado · você está autenticado', 'ok');
         form.reset();
-      } catch (err) { toast(`registro falhou: ${err.message}`, 'err'); }
+      } catch (err) {
+        if (isAuthError(err)) {
+          showAccessDenied('Não foi possível registrar com essas credenciais.', {
+            status: err.status || '401',
+            origin: 'POST /api/v1/auth/register',
+          });
+        } else {
+          toast(`registro falhou: ${err.message}`, 'err');
+        }
+      }
     });
   });
 
@@ -889,9 +949,18 @@
           password: form.elements.password.value,
         }, { auth: false });
         setTokens(resp);
-        toast('login ok', 'ok');
+        toast('login efetuado com sucesso', 'ok');
         form.reset();
-      } catch (err) { toast(`login falhou: ${err.message}`, 'err'); }
+      } catch (err) {
+        if (isAuthError(err)) {
+          showAccessDenied('Email ou senha incorretos. Verifique as credenciais e tente novamente.', {
+            status: err.status || '401',
+            origin: 'POST /api/v1/auth/login',
+          });
+        } else {
+          toast(`login falhou: ${err.message}`, 'err');
+        }
+      }
     });
   });
 
@@ -1517,6 +1586,11 @@
   }
 
   document.addEventListener('keydown', handleGlobalShortcuts);
+  wireAccessDeniedDialog();
+  Object.entries({ 'm-rps': '⚡', 'm-p95': '⏱', 'm-4xx': '⚠', 'm-5xx': '🛑' }).forEach(([valueId, icon]) => {
+    const card = $(`#${valueId}`)?.closest('.metric');
+    if (card) card.dataset.icon = icon;
+  });
   applyI18n();
   setInterval(tickCountdown, 1000);
   loadPlaygroundConfig();

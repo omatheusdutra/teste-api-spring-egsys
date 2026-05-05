@@ -78,6 +78,47 @@ class PlaygroundFrontendTest {
     }
 
     @Test
+    fun `modal access denied existe e usa renderizacao segura`() {
+        html.shouldContain("id=\"access-denied-dialog\"")
+        html.shouldContain("id=\"access-denied-title\"")
+        html.shouldContain("id=\"access-denied-reason\"")
+        html.shouldContain("class=\"access-denied-close\"")
+        js.shouldContain("function showAccessDenied")
+        js.shouldContain("function isAuthError")
+        js.shouldContain("function wireAccessDeniedDialog")
+        js.shouldContain("showAccessDenied('Email ou senha incorretos")
+        js.shouldContain("showAccessDenied('Não foi possível registrar")
+        js.shouldContain("access-denied-dialog")
+        css.shouldContain("dialog#access-denied-dialog")
+        css.shouldContain(".access-denied-x")
+        css.shouldContain("@media (prefers-reduced-motion: reduce)")
+    }
+
+    @Test
+    fun `categorias usam cards ricos com copiar id`() {
+        js.shouldContain("class: 'cat-icon'")
+        js.shouldContain("class: 'cat-info'")
+        js.shouldContain("class: 'cat-copy-btn'")
+        js.shouldContain("navigator.clipboard.writeText(c.id)")
+        js.shouldContain("Copiado ✓")
+        css.shouldContain(".cat-icon")
+        css.shouldContain(".cat-copy-btn")
+        css.shouldContain("#categoria-list .task-row::before")
+    }
+
+    @Test
+    fun `metricas recebem icones e select usa tema escuro`() {
+        js.shouldContain("'m-rps': '⚡'")
+        js.shouldContain("'m-p95': '⏱'")
+        js.shouldContain("'m-4xx': '⚠'")
+        js.shouldContain("'m-5xx': '🛑'")
+        js.shouldContain("card.dataset.icon = icon")
+        css.shouldContain("color-scheme: dark")
+        css.shouldContain(".metric::after")
+        css.shouldContain("content: attr(data-icon)")
+    }
+
+    @Test
     fun `reset limpa estado local e campos visuais da sessao`() {
         js.shouldContain("function resetLocalSession")
         js.shouldContain("function resetForms")
