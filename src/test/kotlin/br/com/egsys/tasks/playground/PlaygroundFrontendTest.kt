@@ -176,6 +176,7 @@ class PlaygroundFrontendTest {
         js.shouldContain("/playground/config")
         js.shouldContain("attackDemosEnabled")
         html.shouldContain("Demonstrações ofensivas disponíveis apenas em ambiente controlado.")
+        html.contains("veja segurando ao vivo").shouldBeFalse()
     }
 
     @Test

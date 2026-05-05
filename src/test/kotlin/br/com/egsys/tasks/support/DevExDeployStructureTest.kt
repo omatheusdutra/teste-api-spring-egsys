@@ -13,6 +13,9 @@ class DevExDeployStructureTest {
         dockerfile shouldContain "FROM eclipse-temurin:21-jdk-alpine AS build"
         dockerfile shouldContain "FROM gcr.io/distroless/java21-debian12:nonroot"
         dockerfile shouldContain "USER nonroot:nonroot"
+        dockerfile shouldContain "-XX:MaxRAMPercentage=45.0"
+        dockerfile shouldContain "-XX:MaxMetaspaceSize=128m"
+        dockerfile shouldContain "-XX:+UseSerialGC"
     }
 
     @Test
@@ -48,6 +51,8 @@ class DevExDeployStructureTest {
         application shouldContain "port: \${PORT:8080}"
         prod shouldContain "jdbc:postgresql://\${EGSYS_DB_HOST}:\${EGSYS_DB_PORT:5432}/\${EGSYS_DB_NAME}"
         prod shouldContain "url: \${EGSYS_REDIS_URL}"
+        prod shouldContain "maximum-pool-size: \${EGSYS_DB_POOL_MAX:3}"
+        prod shouldContain "minimum-idle: \${EGSYS_DB_POOL_MIN:1}"
     }
 
     @Test

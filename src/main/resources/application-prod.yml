@@ -6,6 +6,9 @@ spring:
     url: jdbc:postgresql://${EGSYS_DB_HOST}:${EGSYS_DB_PORT:5432}/${EGSYS_DB_NAME}
     username: ${EGSYS_DB_USERNAME}
     password: ${EGSYS_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${EGSYS_DB_POOL_MAX:3}
+      minimum-idle: ${EGSYS_DB_POOL_MIN:1}
   data:
     redis:
       url: ${EGSYS_REDIS_URL}
