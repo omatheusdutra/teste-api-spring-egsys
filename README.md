@@ -104,7 +104,9 @@ Garantias do frontend:
 - token apenas em memória JS;
 - sem `localStorage`, `sessionStorage`, `eval` ou handlers inline;
 - renderização com `createElement`/`textContent`;
-- CSP e headers de segurança preservados;
+- CSP centralizada no Spring Security por header HTTP, com scripts restritos a `'self'`;
+- fontes auto-hospedadas em `/assets/fonts`, sem Google Fonts/CDN;
+- `style-src 'unsafe-inline'` mantido como concessão controlada para o CSS embutido da home pública;
 - suporte a `prefers-reduced-motion` e navegação acessível por teclado.
 
 ### 🎬 Intrusion Theater

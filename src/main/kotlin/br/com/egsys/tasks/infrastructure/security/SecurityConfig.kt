@@ -117,14 +117,14 @@ class SecurityConfig(
 
     private companion object {
         const val CONTENT_SECURITY_POLICY =
-            "default-src 'none'; " +
+            "default-src 'self'; " +
                 "script-src 'self'; " +
                 "style-src 'self' 'unsafe-inline'; " +
-                "img-src 'self' data:; " +
+                "img-src 'self' data: https:; " +
                 "font-src 'self' data:; " +
                 "connect-src 'self'; " +
-                "base-uri 'none'; " +
-                "form-action 'none'; " +
+                "base-uri 'self'; " +
+                "form-action 'self'; " +
                 "frame-ancestors 'none'"
     }
 }

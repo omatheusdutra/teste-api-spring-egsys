@@ -28,9 +28,7 @@ class PlaygroundFrontendTest {
         // CSP global proíbe inline-script. Logo, a única forma de carregar JS é via src=.
         val inlineScriptOpenTag = Regex("<script(?![^>]*\\bsrc=)[^>]*>[\\s\\S]+?</script>", RegexOption.IGNORE_CASE)
         inlineScriptOpenTag.containsMatchIn(html).shouldBeFalse()
-        html.shouldContain("http-equiv=\"Content-Security-Policy\"")
-        html.shouldContain("script-src 'self'")
-        html.shouldContain("style-src 'self'")
+        html.contains("http-equiv=\"Content-Security-Policy\"").shouldBeFalse()
         html.shouldContain("name=\"referrer\" content=\"no-referrer\"")
         html.shouldContain("/playground/assets/app.js")
         html.shouldContain("/playground/assets/styles.css")

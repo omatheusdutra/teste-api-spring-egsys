@@ -63,8 +63,10 @@ class AuthorizationAndHeadersTests {
         mockMvc
             .perform(get("/api/v1/categorias"))
             .andExpect(status().isUnauthorized)
-            .andExpect(header().string("Content-Security-Policy", containsString("default-src 'none'")))
+            .andExpect(header().string("Content-Security-Policy", containsString("default-src 'self'")))
             .andExpect(header().string("Content-Security-Policy", containsString("script-src 'self'")))
+            .andExpect(header().string("Content-Security-Policy", containsString("style-src 'self' 'unsafe-inline'")))
+            .andExpect(header().string("Content-Security-Policy", containsString("font-src 'self' data:")))
             .andExpect(header().string("Content-Security-Policy", containsString("frame-ancestors 'none'")))
             .andExpect(header().string("X-Content-Type-Options", "nosniff"))
             .andExpect(header().string("X-Frame-Options", "DENY"))

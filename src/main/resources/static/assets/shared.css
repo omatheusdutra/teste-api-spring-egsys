@@ -209,6 +209,10 @@
   object-fit: contain;
 }
 
+.mini-footer .footer-wordmark span {
+  color: var(--cyan);
+}
+
 .mini-footer .footer-links-mini {
   display: inline-flex;
   align-items: center;
