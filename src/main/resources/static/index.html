@@ -236,28 +236,36 @@ body {
   100% { transform: scale(3); opacity: 0; }
 }
 .hero h1 {
-  font-size: clamp(40px, 7vw, 88px);
+  font-size: clamp(36px, 6.2vw, 76px);
   font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.02;
-  margin-bottom: 24px;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  margin-bottom: 28px;
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
   background: linear-gradient(180deg, #fff 0%, #fff 40%, #94A3B8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .hero h1 .accent {
+  display: inline-block;
+  text-wrap: balance;
+  -webkit-text-wrap: balance;
   background: linear-gradient(135deg, #FF6B2C 0%, #FF8A55 50%, #22D3EE 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .hero p.lead {
-  font-size: 19px;
+  font-size: 18px;
   color: var(--text-2);
-  max-width: 680px;
+  max-width: 620px;
   margin: 0 auto 40px;
-  line-height: 1.6;
+  line-height: 1.65;
+  font-weight: 400;
+  letter-spacing: -0.005em;
 }
 .cta-row {
   display: flex;
@@ -737,6 +745,11 @@ footer {
   section { padding: 40px 0; }
 }
 
+@media (max-width: 640px) {
+  .hero h1 { font-size: 36px; line-height: 1.1; }
+  .hero p.lead { font-size: 16px; }
+}
+
 /* ============== REVEAL ============== */
 .reveal {
   opacity: 0;
@@ -746,6 +759,320 @@ footer {
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ============================================================ */
+/* PAINEL DE CREDIBILIDADE                                      */
+/* ============================================================ */
+.status-board {
+  position: relative;
+  margin: 60px 0;
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 28px;
+  align-items: center;
+
+  background:
+    radial-gradient(circle at 0% 50%, rgba(255, 107, 44, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 100% 50%, rgba(34, 211, 238, 0.05) 0%, transparent 40%),
+    rgba(255, 255, 255, 0.025);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+  isolation: isolate;
+}
+.status-board::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 107, 44, 0.4),
+    rgba(34, 211, 238, 0.4),
+    transparent
+  );
+  z-index: 1;
+}
+.status-board__scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(34, 211, 238, 0.06) 49%,
+    rgba(34, 211, 238, 0.18) 50%,
+    rgba(34, 211, 238, 0.06) 51%,
+    transparent 100%
+  );
+  background-size: 100% 200%;
+  background-position: 0 -100%;
+  animation: scanline-sweep 4.5s ease-in-out infinite;
+  opacity: 0.5;
+}
+@keyframes scanline-sweep {
+  0%, 100% { background-position: 0 -100%; opacity: 0; }
+  40% { opacity: 0.5; }
+  50% { background-position: 0 200%; opacity: 0.5; }
+  51% { opacity: 0; }
+}
+
+.status-board__timestamp {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+  z-index: 2;
+}
+.status-board__timestamp-label {
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.status-board__timestamp-value {
+  color: var(--green);
+}
+
+.status-board__op {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+.status-board__op-pulse {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow:
+    0 0 0 3px rgba(16, 224, 152, 0.18),
+    0 0 16px rgba(16, 224, 152, 0.6);
+  flex-shrink: 0;
+}
+.status-board__op-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid rgba(16, 224, 152, 0.6);
+  animation: op-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes op-ping {
+  0% { transform: scale(0.8); opacity: 1; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+.status-board__op-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.status-board__op-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--green);
+  text-shadow: 0 0 12px rgba(16, 224, 152, 0.35);
+}
+.status-board__op-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: var(--text-3);
+}
+
+.status-board__divider {
+  width: 1px;
+  height: 56px;
+  background: linear-gradient(180deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+  z-index: 2;
+}
+
+.status-board__cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+  z-index: 2;
+}
+.status-board__cols .status-cell + .status-cell {
+  border-left: 1px solid;
+  border-image: linear-gradient(180deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  ) 1;
+}
+
+.status-cell {
+  position: relative;
+  padding: 6px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.25s ease;
+}
+.status-cell:hover {
+  transform: translateY(-1px);
+}
+.status-cell:hover .status-cell__value {
+  text-shadow: 0 0 14px currentColor;
+}
+
+.status-cell__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-cell__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(16, 224, 152, 0.7);
+  flex-shrink: 0;
+  animation: dot-pulse 3s ease-in-out infinite;
+}
+.status-cell:nth-child(2) .status-cell__dot { animation-delay: 0.6s; }
+.status-cell:nth-child(3) .status-cell__dot { animation-delay: 1.2s; }
+.status-cell:nth-child(4) .status-cell__dot { animation-delay: 1.8s; }
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(16, 224, 152, 0.7); }
+  50% { opacity: 0.55; box-shadow: 0 0 4px rgba(16, 224, 152, 0.35); }
+}
+
+.status-cell__icon {
+  width: 12px;
+  height: 12px;
+  color: var(--text-3);
+  opacity: 0.7;
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+.status-cell:hover .status-cell__icon {
+  opacity: 1;
+}
+
+.status-cell__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+.status-cell__value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+  margin-top: 2px;
+  transition: text-shadow 0.25s ease;
+}
+
+.status-cell__meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: var(--text-3);
+  opacity: 0.75;
+}
+
+.status-cell[data-tone="cyan"]:hover .status-cell__icon { color: var(--cyan); }
+.status-cell[data-tone="orange"]:hover .status-cell__icon { color: var(--orange); }
+.status-cell[data-tone="purple"]:hover .status-cell__icon { color: var(--purple); }
+.status-cell[data-tone="green"]:hover .status-cell__icon { color: var(--green); }
+
+.status-cell--anchor .status-cell__value {
+  background: linear-gradient(135deg, #FF6B2C 0%, #FF8A55 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 18px rgba(255, 107, 44, 0.35);
+  position: relative;
+}
+.status-cell--anchor .status-cell__icon {
+  color: var(--orange-soft);
+  opacity: 1;
+}
+.status-cell--anchor .status-cell__dot {
+  background: var(--orange);
+  box-shadow: 0 0 10px rgba(255, 107, 44, 0.8);
+  animation: anchor-pulse 2s ease-in-out infinite;
+}
+@keyframes anchor-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 44, 0.8); }
+  50% { box-shadow: 0 0 18px rgba(255, 107, 44, 1), 0 0 30px rgba(255, 107, 44, 0.4); }
+}
+.status-cell--anchor:hover .status-cell__value {
+  text-shadow: 0 0 28px rgba(255, 107, 44, 0.6);
+}
+
+@media (max-width: 960px) {
+  .status-board {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 24px;
+  }
+  .status-board__divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.18),
+      transparent
+    );
+  }
+  .status-board__cols {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 0;
+  }
+  .status-board__cols .status-cell + .status-cell { border-left: none; }
+  .status-board__cols .status-cell:nth-child(odd) {
+    border-right: 1px solid;
+    border-image: linear-gradient(180deg, transparent, rgba(255,255,255,0.1), transparent) 1;
+  }
+  .status-board__timestamp {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-width: 520px) {
+  .status-board__cols { grid-template-columns: 1fr; }
+  .status-board__cols .status-cell:nth-child(odd) { border-right: none; }
+  .status-board__cols .status-cell + .status-cell {
+    border-top: 1px solid;
+    border-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent) 1;
+    padding-top: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-board__scanline,
+  .status-board__op-pulse::after,
+  .status-cell__dot,
+  .status-cell--anchor .status-cell__dot {
+    animation: none;
+  }
 }
 </style>
 </head>
@@ -791,10 +1118,10 @@ footer {
     </div>
     <h1>
       Tasks API<br>
-      <span class="accent">segura por padrão.</span>
+      <span class="accent">feita para devolver tempo às pessoas.</span>
     </h1>
     <p class="lead">
-      Uma API de tarefas com autenticação, autorização por usuário, trilha de auditoria, métricas e deploy em container.
+      Engenharia robusta a serviço de uma ideia simples: software bom é aquele que sai do caminho para que a vida aconteça.
     </p>
     <div class="cta-row">
       <a class="btn btn-playground" href="/playground">
@@ -825,28 +1152,76 @@ footer {
     </div>
   </header>
 
-  <!-- STATUS BAR -->
-  <div class="status-bar reveal">
-    <div class="status-live">
-      <span class="live-dot"></span>
-      <span>Sistema Operacional</span>
+  <!-- STATUS BOARD -->
+  <div class="status-board reveal" role="status" aria-label="Status do sistema">
+    <div class="status-board__scanline" aria-hidden="true"></div>
+
+    <div class="status-board__timestamp">
+      <span class="status-board__timestamp-label">last check</span>
+      <span class="status-board__timestamp-value" id="status-last-check">just now</span>
     </div>
-    <div class="stats">
-      <div class="stat-item">
-        <div class="label">API</div>
-        <div class="value">REST</div>
+
+    <div class="status-board__op">
+      <span class="status-board__op-pulse" aria-hidden="true"></span>
+      <div class="status-board__op-text">
+        <span class="status-board__op-title">SISTEMA OPERACIONAL</span>
+        <span class="status-board__op-sub">all systems nominal</span>
       </div>
-      <div class="stat-item">
-        <div class="label">Segurança</div>
-        <div class="value">RS256</div>
+    </div>
+
+    <div class="status-board__divider" aria-hidden="true"></div>
+
+    <div class="status-board__cols">
+      <div class="status-cell" data-tone="cyan">
+        <div class="status-cell__head">
+          <span class="status-cell__dot" aria-hidden="true"></span>
+          <svg class="status-cell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M5 12h14M5 6h14M5 18h14"/>
+          </svg>
+          <span class="status-cell__label">API</span>
+        </div>
+        <div class="status-cell__value">REST</div>
+        <div class="status-cell__meta">v1 · OpenAPI 3.1</div>
       </div>
-      <div class="stat-item">
-        <div class="label">Dados</div>
-        <div class="value">Postgres</div>
+
+      <div class="status-cell status-cell--anchor" data-tone="orange">
+        <div class="status-cell__head">
+          <span class="status-cell__dot" aria-hidden="true"></span>
+          <svg class="status-cell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+          <span class="status-cell__label">SEGURANÇA</span>
+        </div>
+        <div class="status-cell__value">RS256</div>
+        <div class="status-cell__meta">2048-bit · jti revocation</div>
       </div>
-      <div class="stat-item">
-        <div class="label">Observabilidade</div>
-        <div class="value">Prometheus</div>
+
+      <div class="status-cell" data-tone="purple">
+        <div class="status-cell__head">
+          <span class="status-cell__dot" aria-hidden="true"></span>
+          <svg class="status-cell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <ellipse cx="12" cy="5" rx="8" ry="3"/>
+            <path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/>
+            <path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>
+          </svg>
+          <span class="status-cell__label">DADOS</span>
+        </div>
+        <div class="status-cell__value">Postgres</div>
+        <div class="status-cell__meta">v16 · flyway migrated</div>
+      </div>
+
+      <div class="status-cell" data-tone="green">
+        <div class="status-cell__head">
+          <span class="status-cell__dot" aria-hidden="true"></span>
+          <svg class="status-cell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 3v18h18"/>
+            <path d="M7 14l4-4 4 4 5-5"/>
+          </svg>
+          <span class="status-cell__label">OBSERVABILIDADE</span>
+        </div>
+        <div class="status-cell__value">Prometheus</div>
+        <div class="status-cell__meta">OTLP · Grafana ready</div>
       </div>
     </div>
   </div>
@@ -1116,5 +1491,28 @@ footer {
 </div>
 
 <script src="/home.js"></script>
+<script>
+(function() {
+  const lastCheckEl = document.getElementById('status-last-check');
+  if (!lastCheckEl) return;
+
+  const startedAt = Date.now();
+  const labels = {
+    'pt-BR': { now: 'just now', sec: 'há %ss', min: 'há %sm' },
+    'en-US': { now: 'just now', sec: '%ss ago', min: '%sm ago' },
+  };
+  const lang = (navigator.language || 'pt-BR').startsWith('pt') ? 'pt-BR' : 'en-US';
+  const t = labels[lang];
+
+  function update() {
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    if (elapsed < 5) lastCheckEl.textContent = t.now;
+    else if (elapsed < 60) lastCheckEl.textContent = t.sec.replace('%s', elapsed);
+    else lastCheckEl.textContent = t.min.replace('%s', Math.floor(elapsed / 60));
+  }
+  update();
+  setInterval(update, 1000);
+})();
+</script>
 </body>
 </html>
