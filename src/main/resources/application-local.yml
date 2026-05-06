@@ -25,3 +25,4 @@ egsys:
   playground:
     enabled: true
     attack-demos-enabled: true
+    metrics-enabled: true

@@ -6,4 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class PlaygroundProperties(
     var enabled: Boolean = false,
     var attackDemosEnabled: Boolean = false,
+    var metricsEnabled: Boolean = false,
 )

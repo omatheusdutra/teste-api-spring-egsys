@@ -105,6 +105,7 @@ class PlaygroundAvailabilityTests {
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.attackDemosEnabled").value(false))
+            .andExpect(jsonPath("$.metricsEnabled").value(false))
     }
 
     private val contextRunner =

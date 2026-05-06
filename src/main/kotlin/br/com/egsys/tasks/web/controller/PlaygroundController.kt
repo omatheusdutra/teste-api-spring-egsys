@@ -32,6 +32,7 @@ class PlaygroundController(
     fun config(): PlaygroundConfigResponse =
         PlaygroundConfigResponse(
             attackDemosEnabled = properties.attackDemosEnabled,
+            metricsEnabled = properties.metricsEnabled,
         )
 
     @GetMapping("/assets/{name:[a-z0-9.-]{1,64}}")
@@ -78,4 +79,5 @@ class PlaygroundController(
 
 data class PlaygroundConfigResponse(
     val attackDemosEnabled: Boolean,
+    val metricsEnabled: Boolean,
 )

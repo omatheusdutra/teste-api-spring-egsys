@@ -157,6 +157,7 @@ class PlaygroundFrontendTest {
     fun `playground busca config e bloqueia demos ofensivas quando desabilitadas`() {
         js.shouldContain("/playground/config")
         js.shouldContain("attackDemosEnabled")
+        js.shouldContain("metricsEnabled")
         js.shouldContain("card.hidden = !attackDemosEnabled")
         css.shouldContain(".defense-demos[hidden]")
         html.contains("veja segurando ao vivo").shouldBeFalse()
@@ -226,13 +227,15 @@ class PlaygroundFrontendTest {
         js.shouldContain("métricas presentes mas formato inesperado")
         js.shouldContain("telemetria operacional validada via Prometheus protegido")
         js.shouldContain("console.debug('[playground] prometheus raw sample'")
+        js.shouldContain("Métricas Prometheus protegidas em produção.")
+        js.shouldContain("playgroundConfig.metricsEnabled !== true")
     }
 
     @Test
     fun `polling de métricas é cancelado ao sair da aba`() {
         js.shouldContain("if (name !== 'metricas' && metricsTimer)")
         js.shouldContain("clearTimeout(metricsTimer)")
-        js.shouldContain("if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000)")
+        js.shouldContain("playgroundConfig.metricsEnabled === true && !$('#tab-metricas').hidden")
     }
 
     @Test

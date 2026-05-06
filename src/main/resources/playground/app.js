@@ -12,7 +12,7 @@
   let lastRequest = null;  // { method, url, headers, body, status, latencyMs, responseText }
   const auditLog = [];
   const defenseStats = { rateLimit: { current: 0, max: 100 }, lastTriggered: null };
-  let playgroundConfig = { attackDemosEnabled: false };
+  let playgroundConfig = { attackDemosEnabled: false, metricsEnabled: false };
   let refreshTimer = null;
   let rateLimitResetTimer = null;
   const pendingDeleteTimers = new Map();
@@ -38,8 +38,9 @@
       'tabs.audit': 'Auditoria',
       'tabs.metrics': 'Métricas',
       'health.pending': 'health: --',
-      'health.up': 'health: UP',
+      'health.up': 'health: online',
       'health.warn': 'health: degradado',
+      'health.protected': 'health: protegido',
       'health.down': 'health: down',
       'theater.close': 'FECHAR · ESC',
       'theater.attacker': 'attacker · pov',
@@ -61,8 +62,9 @@
       'tabs.audit': 'Audit',
       'tabs.metrics': 'Metrics',
       'health.pending': 'health: --',
-      'health.up': 'health: UP',
+      'health.up': 'health: online',
       'health.warn': 'health: degraded',
+      'health.protected': 'health: protected',
       'health.down': 'health: down',
       'theater.close': 'CLOSE · ESC',
       'theater.attacker': 'attacker · pov',
@@ -201,7 +203,7 @@
         playgroundConfig = await response.json();
       }
     } catch (_) {
-      playgroundConfig = { attackDemosEnabled: false };
+      playgroundConfig = { attackDemosEnabled: false, metricsEnabled: false };
     }
     applyPlaygroundConfig();
   }
@@ -217,6 +219,7 @@
       btn.disabled = !attackDemosEnabled;
       btn.setAttribute('aria-disabled', String(!attackDemosEnabled));
     });
+    renderMetricsProtectedState();
   }
 
   // Decode local apenas para exibição; a validação real acontece no backend.
@@ -1119,7 +1122,26 @@
   // Métricas
   let metricsTimer = null;
   let metricsRawLogged = false;
+
+  function renderMetricsProtectedState() {
+    if (playgroundConfig.metricsEnabled === true) return;
+    if (metricsTimer) {
+      clearTimeout(metricsTimer);
+      metricsTimer = null;
+    }
+    $('#m-rps').textContent = '--';
+    $('#m-p95').textContent = '--';
+    $('#m-4xx').textContent = '--';
+    $('#m-5xx').textContent = '--';
+    renderLatencySparkline();
+    $('#metrics-hint').textContent = 'Métricas Prometheus protegidas em produção.';
+  }
+
   async function refreshMetrics() {
+    if (playgroundConfig.metricsEnabled !== true) {
+      renderMetricsProtectedState();
+      return;
+    }
     if (!accessToken) {
       $('#metrics-hint').textContent = 'faça login primeiro.';
       return;
@@ -1150,7 +1172,9 @@
         ? 'telemetria operacional validada via Prometheus protegido'
         : 'métricas presentes mas formato inesperado — abra DevTools';
       if (metricsTimer) clearTimeout(metricsTimer);
-      if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000);
+      if (playgroundConfig.metricsEnabled === true && !$('#tab-metricas').hidden) {
+        metricsTimer = setTimeout(refreshMetrics, 5000);
+      }
     } catch (err) {
       $('#metrics-hint').textContent = `métricas indisponíveis: ${err.message}`;
     }
@@ -1492,12 +1516,15 @@
       if (response.ok && body.status === 'UP') {
         pill.classList.add('health-up');
         pill.textContent = t('health.up');
+      } else if (response.status === 401 || response.status === 403) {
+        pill.classList.add('health-warn');
+        pill.textContent = t('health.protected');
       } else if (response.ok) {
         pill.classList.add('health-warn');
         pill.textContent = t('health.warn');
       } else {
-        pill.classList.add('health-down');
-        pill.textContent = t('health.down');
+        pill.classList.add('health-warn');
+        pill.textContent = t('health.warn');
       }
     } catch (err) {
       pill.classList.remove('health-up', 'health-warn');
