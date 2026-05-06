@@ -142,7 +142,22 @@
   }
 
   function attackDemosUnavailableMessage() {
-    return 'Demonstrações ofensivas disponíveis apenas em ambiente controlado.';
+    return 'Demonstrações ofensivas ficam disponíveis apenas em ambiente dev/sandbox.';
+  }
+
+  function statusLabel(status) {
+    const normalized = String(status || '').toUpperCase().replace(/-/g, '_');
+    const labels = {
+      PENDENTE: 'PENDENTE',
+      EM_ANDAMENTO: 'EM ANDAMENTO',
+      CONCLUIDA: 'CONCLUIDA',
+      CANCELADA: 'CANCELADA',
+    };
+    return labels[normalized] || normalized.replace(/_/g, ' ');
+  }
+
+  function statusText(status) {
+    return statusLabel(status).toLowerCase();
   }
 
   function isAuthError(err) {
@@ -199,9 +214,10 @@
   function applyPlaygroundConfig() {
     const attackDemosEnabled = playgroundConfig.attackDemosEnabled === true;
     const card = $('#defense-demos-card');
-    const message = $('#defense-demos-disabled');
-    if (card) card.classList.toggle('demo-locked', !attackDemosEnabled);
-    if (message) message.hidden = attackDemosEnabled;
+    if (card) {
+      card.hidden = !attackDemosEnabled;
+      card.classList.toggle('demo-locked', !attackDemosEnabled);
+    }
     $$('.demo-btn').forEach(btn => {
       btn.disabled = !attackDemosEnabled;
       btn.setAttribute('aria-disabled', String(!attackDemosEnabled));
@@ -793,7 +809,7 @@
         t.titulo,
         t.descricao || '',
         t.categoria?.descricao || '',
-        t.status || '',
+        statusLabel(t.status),
       ].some(value => value.toLowerCase().includes(query)));
     if (visibleTarefas.length === 0) {
       host.replaceChildren(renderEmptyTasksState());
@@ -805,7 +821,7 @@
         el('div', {}, [
           el('div', { class: 'task-title' }, [t.titulo]),
           el('div', { class: 'task-meta' }, [
-            el('span', { class: `badge badge-${statusKind}` }, [t.status]),
+            el('span', { class: `badge badge-${statusKind}` }, [statusLabel(t.status)]),
             ' · ',
             new Date(t.dataHora).toLocaleString('pt-BR'),
             ' · ',
@@ -855,7 +871,7 @@
       // Contrato atual do backend: alterar status é um comando de domínio,
       // exposto como POST /status/{status} e validado pela máquina de estados.
       await api('POST', `/api/v1/tarefas/${id}/status/${status}`);
-      toast(`status alterado para ${status}`, 'ok');
+      toast(`status alterado para ${statusText(status)}`, 'ok');
       loadTarefas();
     } catch (err) {
       toast(`falhou: ${err.message}`, 'err');
@@ -1166,7 +1182,7 @@
       $('#m-5xx').textContent = summary.count5xx;
       if (p95Ms != null) pushLatencySample(p95Ms);
       $('#metrics-hint').textContent = summary.formatMatched
-        ? 'snapshot capturado de /actuator/prometheus'
+        ? 'telemetria operacional validada via Prometheus protegido'
         : 'métricas presentes mas formato inesperado — abra DevTools';
       if (metricsTimer) clearTimeout(metricsTimer);
       if (!$('#tab-metricas').hidden) metricsTimer = setTimeout(refreshMetrics, 5000);

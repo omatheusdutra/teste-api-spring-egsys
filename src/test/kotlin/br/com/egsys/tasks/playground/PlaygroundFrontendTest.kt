@@ -175,8 +175,17 @@ class PlaygroundFrontendTest {
     fun `playground busca config e bloqueia demos ofensivas quando desabilitadas`() {
         js.shouldContain("/playground/config")
         js.shouldContain("attackDemosEnabled")
-        html.shouldContain("Demonstrações ofensivas disponíveis apenas em ambiente controlado.")
+        js.shouldContain("card.hidden = !attackDemosEnabled")
+        css.shouldContain(".defense-demos[hidden]")
         html.contains("veja segurando ao vivo").shouldBeFalse()
+    }
+
+    @Test
+    fun `status de tarefa usa label amigavel sem underscore ou hifen`() {
+        js.shouldContain("function statusLabel")
+        js.shouldContain("EM ANDAMENTO")
+        js.shouldContain("status alterado para \${statusText(status)}")
+        css.shouldContain("text-decoration: none")
     }
 
     @Test
@@ -242,6 +251,7 @@ class PlaygroundFrontendTest {
     fun `métricas aceitam count e total e avisam formato inesperado`() {
         js.shouldContain("http_server_requests_seconds_(?:count|total)")
         js.shouldContain("métricas presentes mas formato inesperado")
+        js.shouldContain("telemetria operacional validada via Prometheus protegido")
         js.shouldContain("console.debug('[playground] prometheus raw sample'")
     }
 

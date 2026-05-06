@@ -27,8 +27,7 @@ própria API. Em produção, eles devem ficar desligados por padrão.
 - `application-prod.yml` habilita o playground como demo controlada, mas define
   `egsys.playground.attack-demos-enabled=false`.
 - O frontend busca `/playground/config` ao iniciar. Quando as demonstrações ofensivas estão
-  desligadas, o painel fica bloqueado e exibe a mensagem:
-  "Demonstrações ofensivas disponíveis apenas em ambiente controlado."
+  desligadas, o painel fica oculto para manter a demo pública limpa e profissional.
 
 ## Consequências
 
@@ -36,5 +35,5 @@ própria API. Em produção, eles devem ficar desligados por padrão.
 - O pentest interativo completo permanece limitado a ambientes `dev`/`local`/sandbox.
 - A CSP, os headers de segurança, o uso de JS externo e o armazenamento de token apenas em memória
   continuam sendo requisitos do playground.
-- Testes passam a validar disponibilidade por propriedade, configuracao de demos ofensivas e
-  ausencia de `localStorage`, `sessionStorage`, `eval` e handlers inline.
+- Testes passam a validar disponibilidade por propriedade, configuração de demos ofensivas e
+  ausência de `localStorage`, `sessionStorage`, `eval` e handlers inline.

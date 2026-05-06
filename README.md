@@ -54,33 +54,22 @@ SPRING_PROFILES_ACTIVE=dev EGSYS_DB_PASSWORD=egsys_local_password ./gradlew boot
 
 Comandos curtos também estão no `Makefile`: `make check`, `make pitest`, `make compose-up`, `make docker-build`.
 
-## 🚀 Deploy Demo
+## 🌐 Demo Online
 
-Para publicar uma demo controlada na Render, use o Blueprint versionado:
+A aplicação está publicada em:
 
-1. No Dashboard da Render, abra **Blueprints**.
-2. Crie uma instância a partir deste repositório.
-3. Preencha `EGSYS_JWT_PRIVATE_KEY` e `EGSYS_JWT_PUBLIC_KEY`.
-4. Aguarde a criação do Web Service, PostgreSQL e Key Value.
-5. Valide `/playground/config` com `attackDemosEnabled=false`.
+- Home: <https://egsys-tasks-api.onrender.com>
+- Playground: <https://egsys-tasks-api.onrender.com/playground>
+- OpenAPI: <https://egsys-tasks-api.onrender.com/swagger-ui.html>
 
-Para publicar em VPS própria, use o Compose dedicado:
-
-```bash
-cp deploy/demo.env.example deploy/demo.env
-# edite deploy/demo.env com secrets reais
-docker compose --env-file deploy/demo.env -f docker-compose.prod.yml up -d --build
-```
-
-Esse modo mantém `/playground` disponível como tour técnico, mas bloqueia as demonstrações ofensivas. Publique atrás de HTTPS
-com reverse proxy apontando para `127.0.0.1:8080` quando usar VPS. O passo a passo operacional fica em [deploy/README.md](deploy/README.md).
+A demo pública roda com perfil `prod`: autenticação, CRUD e tour visual ficam disponíveis, enquanto os cenários ofensivos do playground ficam ocultos. O passo a passo de deploy e operação fica em [deploy/README.md](deploy/README.md).
 
 ## ⚡ Tour de 30s
 
 1. Abra `http://localhost:8080` e clique em **Abrir Playground Interativo**, ou acesse `http://localhost:8080/playground`.
 2. Registre um usuário ou faça login pelo painel de autenticação.
 3. Crie uma tarefa, liste, altere status, consulte histórico e exporte CSV.
-4. Em `dev`/`local`, use **Provoque a defesa** para ver a API bloqueando cenários de ataque.
+4. Em `dev`/`local`, habilite as demos ofensivas para ver a API bloqueando cenários de ataque.
 
 Alternativa via cliente HTTP: importe a coleção Bruno em `bruno/egsys-tasks-api`.
 
@@ -107,7 +96,7 @@ O playground é servido por `PlaygroundController` quando `egsys.playground.enab
 `resources/static`, evitando exposição acidental pelo static resource handler.
 
 Em produção, ele funciona como demo controlada: autenticação, CRUD e visualização continuam disponíveis, mas o painel
-ofensivo fica bloqueado por `egsys.playground.attack-demos-enabled=false`. Em `dev`/`local`, os botões ofensivos ficam
+ofensivo fica oculto por `egsys.playground.attack-demos-enabled=false`. Em `dev`/`local`, os botões ofensivos ficam
 ativos para validação defensiva.
 
 Garantias do frontend:
@@ -120,7 +109,7 @@ Garantias do frontend:
 
 ### 🎬 Intrusion Theater
 
-Ao acionar qualquer botão do painel **Provoque a defesa**, uma overlay cinematográfica mostra o ataque real acontecendo:
+Em `dev`/`local`, ao acionar qualquer demo ofensiva, uma overlay cinematográfica mostra o ataque real acontecendo:
 payload enviado, status code retornado, latência medida e camada defensiva acionada. O teatro não simula a defesa; ele
 visualiza a resposta real da API.
 
@@ -161,7 +150,7 @@ Listagens usam paginação cursor-based e erros HTTP usam RFC 7807 `ProblemDetai
 | Brute force / abuso | rate limiting por IP/usuário com `Retry-After` | `BruteForceTests`, playground demo |
 | Info leak | ProblemDetail sem stack trace e header `Server` removido | `InfoLeakTests` |
 | Métricas internas | `/actuator/prometheus` exige JWT | `AuthorizationAndHeadersTests` |
-| Playground ofensivo em prod | ataques bloqueados por propriedade | `PlaygroundAvailabilityTests` |
+| Playground ofensivo em prod | cenários ofensivos ocultos por propriedade | `PlaygroundAvailabilityTests` |
 
 ## 📈 Observabilidade
 
