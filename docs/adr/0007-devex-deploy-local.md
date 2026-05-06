@@ -6,7 +6,7 @@ Aceita
 
 ## Contexto
 
-O avaliador precisa executar a API rapidamente, mas o projeto também deve demonstrar caminho plausível para produção:
+O projeto precisa ser executado rapidamente em revisão técnica, mantendo um caminho plausível para produção:
 imagem enxuta, stack local realista, comandos comuns e pipeline automatizada.
 
 ## Decisão

@@ -8,23 +8,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 
-/**
- * Regressao F-001 (pentest interno 2026-05-02 cenario 23).
- *
- * Antes da correcao: POST /api/v1/tarefas com NUL byte no titulo retornava 500
- * — o byte escapava do dominio, alcancava o Postgres (que rejeita NUL em colunas
- * TEXT) e lancava DataIntegrityViolationException. ApiExceptionHandler mapeava
- * para 500 generico.
- *
- * Defesa: rejeitar caracteres de controle (bloco C0 + DEL) no value object — assim
- * a entrada e barrada antes de qualquer hop de persistencia, e o handler de
- * DomainException produz 400 ProblemDetail sem stack trace.
- *
- * Nota: Kotlin String.trim() considera VT/FF/CR/LF/etc whitespace e os strip-a
- * automaticamente nas bordas. Por isso os testes posicionam os caracteres de
- * controle NO MEIO da string — exatamente o vetor que um atacante usaria para
- * embutir um NUL escapado dentro de uma payload aparentemente normal.
- */
 class NulByteRejectionTests {
     @Test
     fun `titulo com NUL byte no meio e rejeitado pelo dominio`() {

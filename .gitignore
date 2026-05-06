@@ -4,9 +4,17 @@
 .codex/
 build/
 out/
+target/
+logs/
+docs/screenshots/
 *.iml
 *.log
 *.tmp
+*.class
+*.pem
+*.key
+.DS_Store
+.vscode/
 .env
 .env.*
 !.env.example

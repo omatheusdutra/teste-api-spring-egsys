@@ -1,10 +1,7 @@
 (() => {
   'use strict';
 
-  // ============================================================
-  // STATE: tokens vivem somente em variáveis no closure desta IIFE.
-  // Não usamos localStorage nem sessionStorage — narrativa de segurança consistente.
-  // ============================================================
+  // Tokens ficam apenas em memória nesta sessão.
   let accessToken = null;
   let refreshToken = null;
   let accessExpiresAt = 0; // epoch ms
@@ -77,9 +74,7 @@
     return i18n[currentLang]?.[key] || i18n['pt-BR'][key] || key;
   }
 
-  // ============================================================
-  // DOM helpers (nunca usar innerHTML para dados do servidor).
-  // ============================================================
+  // DOM seguro para dados vindos da API.
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -224,11 +219,7 @@
     });
   }
 
-  // ============================================================
-  // JWT decode (somente para exibir exp/sub/roles — quem valida e o servidor).
-  // base64url -> bytes -> UTF-8 -> JSON. Sem a função deprecada de URI legacy,
-  // usando TextDecoder e padding explícito para tolerar JWTs sem `=` no final (RFC 7515).
-  // ============================================================
+  // Decode local apenas para exibição; a validação real acontece no backend.
   function decodeJwt(token) {
     try {
       const [, payload] = token.split('.');
@@ -246,10 +237,7 @@
     return token.length > 16 ? `${token.slice(0, 12)}...${token.slice(-4)}` : token;
   }
 
-  // ============================================================
-  // HTTP layer: registra cada chamada na auditoria, atualiza painel
-  // de request/response, dispara faixa de defesas em 4xx/5xx.
-  // ============================================================
+  // Camada HTTP do playground.
   async function api(method, path, body, opts = {}) {
     const url = path.startsWith('http') ? path : path;
     const headers = { 'Accept': 'application/json' };
@@ -345,14 +333,11 @@
   }
 
   function detectDefenseTrigger(response, status) {
-    // C7: dispara apenas para status que indicam camada de segurança ATIVA.
-    // 401 (token inválido) e 400 (validação) são UX normal e não devem poluir a faixa.
     if (status === 429) flashDefense('rate-limit');
     else if (status === 403) flashDefense('rbac/idor');
     else if (status === 413) flashDefense('payload-too-large');
     else if (status === 415) flashDefense('content-type');
 
-    // C6: ao receber Retry-After, marca a pill em max e agenda decremento real.
     const retryAfter = response.headers.get('Retry-After');
     if (retryAfter) {
       defenseStats.rateLimit.current = defenseStats.rateLimit.max;
@@ -426,10 +411,7 @@
     applyI18n();
   }
 
-  // ============================================================
-  // INTRUSION THEATER — dramatiza ataques reais sem substituir o fetch.
-  // Status e latência exibidos vêm da resposta verdadeira da API.
-  // ============================================================
+  // Visualização das demos defensivas.
   const theaterScripts = {
     'rate-limit': {
       title: 'flood attack · /auth/login',
@@ -442,7 +424,7 @@
       ],
       payloadHint: 'POST /auth/login × 120  (Promise.all)',
       expectedDefense: 'Bucket4j rate limiter on Spring filter chain',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '429 returned · attacker throttled · audit trail preserved' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: '429 returned · attacker throttled · audit trail preserved' },
       verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'no 429 received — rate limit may not be active' },
     },
     idor: {
@@ -456,7 +438,7 @@
       ],
       payloadHint: 'GET /api/v1/tarefas/{random-uuid}',
       expectedDefense: 'repository and use case scope access by authenticated owner',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '404/403 — resource invisible to non-owner' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: '404/403 — resource invisible to non-owner' },
       verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'unexpected status — investigate ownership checks' },
     },
     'tampered-jwt': {
@@ -470,7 +452,7 @@
       ],
       payloadHint: 'Authorization: Bearer {tampered-token}',
       expectedDefense: 'RS256 signature verification rejects modified JWT',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: '401 — signature mismatch detected' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: '401 — signature mismatch detected' },
       verdictFail: { kind: 'breach', text: 'BREACH SIMULATED', sub: 'tampered token accepted — inspect JWT verification' },
     },
     'alg-none': {
@@ -484,7 +466,7 @@
       ],
       payloadHint: 'Authorization: Bearer {forged-jwt-no-signature}',
       expectedDefense: 'accepted algorithms are allowlisted to RS256 only',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'alg=none rejected before trust boundary' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: 'alg=none rejected before trust boundary' },
       verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'alg=none accepted — inspect JJWT configuration' },
     },
     sqli: {
@@ -498,7 +480,7 @@
       ],
       payloadHint: "GET /api/v1/tarefas?cursor='; DROP TABLE tarefas; --",
       expectedDefense: 'cursor decoder rejects opaque payload before persistence access',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'payload rejected or neutralized · table still intact' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: 'payload rejected or neutralized · table still intact' },
       verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'unexpected behavior — verify query path' },
     },
     'mass-assignment': {
@@ -512,7 +494,7 @@
       ],
       payloadHint: 'POST /api/v1/tarefas { titulo, ownerId: <foreign>, role: ADMIN }',
       expectedDefense: 'DTO strict mode rejects unknown properties before domain mutation',
-      verdictOk: { kind: 'blocked', text: 'INTRUSION BLOCKED', sub: 'injected fields rejected or ignored by server-side ownership' },
+      verdictOk: { kind: 'blocked', text: 'REQUEST BLOCKED', sub: 'injected fields rejected or ignored by server-side ownership' },
       verdictFail: { kind: 'breach', text: 'CRITICAL · BREACH SIMULATED', sub: 'injected ownership may have affected persistence' },
     },
   };
@@ -638,12 +620,6 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // Wires close interactions for the Intrusion Theater dialog:
-  //   - explicit click on FECHAR button
-  //   - click on backdrop (the dialog element itself, since the inner grid stops the bubble)
-  //   - native Esc handling continues working via the global shortcut
-  // After close, focus returns to the demo button that opened the theater so
-  // keyboard users do not lose their place in the page.
   (function wireTheaterDialog() {
     const dlg = $('#intrusion-theater');
     const closeBtn = $('#theater-close');
@@ -661,9 +637,7 @@
     });
   })();
 
-  // ============================================================
-  // AUTH UI
-  // ============================================================
+  // Auth UI
   function setTokens(resp) {
     accessToken = resp.accessToken;
     refreshToken = resp.refreshToken;
@@ -732,9 +706,7 @@
     }
   }
 
-  // ============================================================
-  // CRUD: Categorias e Tarefas
-  // ============================================================
+  // Categorias e tarefas
   function renderSkeletonRows(host, count = 3) {
     host.replaceChildren(...Array.from({ length: count }, () => el('div', { class: 'skeleton-row', 'aria-hidden': 'true' })));
   }
@@ -868,8 +840,7 @@
 
   async function alterarStatus(id, status) {
     try {
-      // Contrato atual do backend: alterar status é um comando de domínio,
-      // exposto como POST /status/{status} e validado pela máquina de estados.
+      // Endpoint mantido como comando de domínio para preservar a máquina de estados.
       await api('POST', `/api/v1/tarefas/${id}/status/${status}`);
       toast(`status alterado para ${statusText(status)}`, 'ok');
       loadTarefas();
@@ -927,9 +898,7 @@
     return new Date(s).toISOString();
   }
 
-  // ============================================================
-  // FORM HANDLERS
-  // ============================================================
+  // Form handlers
   $('#register-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     await withLoadingState(ev.submitter, async () => {
@@ -1113,9 +1082,7 @@
     toast('sessão local resetada', 'ok');
   }));
 
-  // ============================================================
-  // TABS
-  // ============================================================
+  // Tabs
   $$('.tab').forEach(tab => {
     tab.addEventListener('click', () => activateTab(tab.dataset.tab));
     tab.addEventListener('keydown', handleTabKeydown);
@@ -1149,9 +1116,7 @@
     activateTab(next.dataset.tab, true);
   }
 
-  // ============================================================
-  // METRICS (best-effort; precisa role ADMIN para Prometheus)
-  // ============================================================
+  // Métricas
   let metricsTimer = null;
   let metricsRawLogged = false;
   async function refreshMetrics() {
@@ -1244,9 +1209,7 @@
     svg.append(path);
   }
 
-  // ============================================================
-  // CURL + REPEAT
-  // ============================================================
+  // Curl e repeat
   $('#copy-curl').addEventListener('click', async () => {
     if (!lastRequest) return;
     const lines = [`curl -X ${lastRequest.method} '${lastRequest.url}'`];
@@ -1268,9 +1231,7 @@
     api(lastRequest.method, path, lastRequest.body, { auth: !!accessToken }).catch(() => {});
   });
 
-  // ============================================================
-  // DEFENSE DEMOS — botões que atacam a API e mostram veredito ao vivo
-  // ============================================================
+  // Demos defensivas
   const demos = {
     'rate-limit': {
       requireAuth: false,
@@ -1516,9 +1477,7 @@
     }
   }
 
-  // ============================================================
-  // HEALTH + KEYBOARD SHORTCUTS
-  // ============================================================
+  // Health e atalhos
   async function refreshHealth() {
     const pill = $('#health-pill');
     try {
@@ -1593,9 +1552,7 @@
     }
   }
 
-  // ============================================================
-  // INIT
-  // ============================================================
+  // Init
   function onAuthenticated() {
     loadCategorias();
     loadTarefas();

@@ -586,7 +586,7 @@ section { padding: 60px 0; }
   min-height: 280px;
   color: var(--text-1);
 }
-.t-prompt { color: var(--green); }
+.t-shell { color: var(--green); }
 .t-comment { color: var(--text-3); }
 .t-flag { color: var(--orange-soft); }
 .t-string { color: var(--cyan-soft); }
@@ -787,15 +787,14 @@ footer {
   <header class="hero">
     <div class="hero-badge">
       <span class="live-dot"></span>
-      EGSYS Technical Challenge · Production Mindset
+      Teste técnico EGSYS · API Spring Boot
     </div>
     <h1>
       Tasks API<br>
-      <span class="accent">under guard.</span>
+      <span class="accent">segura por padrão.</span>
     </h1>
     <p class="lead">
-      Uma API de produtividade corporativa para transformar tarefas em fluxo operacional confiável:
-      segura por arquitetura, observável por padrão e pronta para escalar integrações reais desde o primeiro deploy.
+      Uma API de tarefas com autenticação, autorização por usuário, trilha de auditoria, métricas e deploy em container.
     </p>
     <div class="cta-row">
       <a class="btn btn-playground" href="/playground">
@@ -818,11 +817,11 @@ footer {
     <div class="hero-meta">
       <span>v1.0.0</span>
       <span class="sep">·</span>
-      <span>kotlin 2.0</span>
+      <span>kotlin 2.x</span>
       <span class="sep">·</span>
       <span>jvm 21</span>
       <span class="sep">·</span>
-      <span>uptime 99.99%</span>
+      <span>spring boot 3.5</span>
     </div>
   </header>
 
@@ -834,20 +833,20 @@ footer {
     </div>
     <div class="stats">
       <div class="stat-item">
-        <div class="label">Testes passando</div>
-        <div class="value" data-count="192">0</div>
+        <div class="label">API</div>
+        <div class="value">REST</div>
       </div>
       <div class="stat-item">
-        <div class="label">Cobertura linhas</div>
-        <div class="value"><span data-count="96">0</span><span class="unit">%</span></div>
+        <div class="label">Segurança</div>
+        <div class="value">RS256</div>
       </div>
       <div class="stat-item">
-        <div class="label">Cenários defensivos</div>
-        <div class="value"><span data-count="49">0</span><span class="unit">/49</span></div>
+        <div class="label">Dados</div>
+        <div class="value">Postgres</div>
       </div>
       <div class="stat-item">
-        <div class="label">Cobertura branches</div>
-        <div class="value"><span data-count="84">0</span><span class="unit">%</span></div>
+        <div class="label">Observabilidade</div>
+        <div class="value">Prometheus</div>
       </div>
     </div>
   </div>
@@ -1072,7 +1071,7 @@ footer {
       <div class="section-eyebrow">Stack</div>
       <h2 class="section-title">Stack madura, impacto imediato.</h2>
       <p class="section-subtitle">
-        Tecnologias provadas em produção, combinadas para segurança, observabilidade e uma demo que o avaliador entende em segundos.
+        Tecnologias maduras, com decisões registradas em ADRs e validação automatizada no build.
       </p>
     </div>
     <div class="tech-marquee">

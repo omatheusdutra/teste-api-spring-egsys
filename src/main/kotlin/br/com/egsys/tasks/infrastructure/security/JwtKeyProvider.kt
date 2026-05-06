@@ -16,7 +16,7 @@ class JwtKeyProvider(
     private val properties: SecurityProperties,
     private val environment: Environment,
 ) {
-    private val generated: KeyPair by lazy {
+    private val fallbackKeyPair: KeyPair by lazy {
         KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
     }
 
@@ -24,7 +24,7 @@ class JwtKeyProvider(
         val configured = properties.jwt.privateKey.trim()
         if (configured.isBlank()) {
             ensureNonProdProfile()
-            return generated.private
+            return fallbackKeyPair.private
         }
 
         return KeyFactory
@@ -36,7 +36,7 @@ class JwtKeyProvider(
         val configured = properties.jwt.publicKey.trim()
         if (configured.isBlank()) {
             ensureNonProdProfile()
-            return generated.public
+            return fallbackKeyPair.public
         }
 
         return KeyFactory

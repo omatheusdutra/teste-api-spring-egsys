@@ -133,16 +133,16 @@
   const term = document.getElementById('terminal');
   const lines = [
     { t: '<span class="t-comment"># 1) registrar usuário</span>', delay: 600 },
-    { t: '<span class="t-prompt">$</span> curl -X POST <span class="t-string">http://localhost:8080/api/v1/auth/register</span> \\', delay: 600 },
+    { t: '<span class="t-shell">$</span> curl -X POST <span class="t-string">http://localhost:8080/api/v1/auth/register</span> \\', delay: 600 },
     { t: '    <span class="t-flag">-H</span> <span class="t-string">"Content-Type: application/json"</span> \\', delay: 400 },
     { t: '    <span class="t-flag">-d</span> <span class="t-string">\'{"email":"dev@egsys.com","password":"S3nh@F0rt3!2026"}\'</span>', delay: 700 },
     { t: '<span class="t-output">→ </span><span class="t-success">201 Created</span> <span class="t-output">{"id":"a3f9...","email":"dev@egsys.com"}</span>', delay: 900, plain: true },
     { t: '', delay: 200, plain: true },
     { t: '<span class="t-comment"># 2) autenticar e capturar JWT</span>', delay: 500 },
-    { t: '<span class="t-prompt">$</span> TOKEN=$(curl -s -X POST <span class="t-string">.../auth/login</span> | jq -r .accessToken)', delay: 800 },
+    { t: '<span class="t-shell">$</span> TOKEN=$(curl -s -X POST <span class="t-string">.../auth/login</span> | jq -r .accessToken)', delay: 800 },
     { t: '', delay: 200, plain: true },
     { t: '<span class="t-comment"># 3) criar tarefa autenticada</span>', delay: 500 },
-    { t: '<span class="t-prompt">$</span> curl -X POST <span class="t-string">http://localhost:8080/api/v1/tarefas</span> \\', delay: 600 },
+    { t: '<span class="t-shell">$</span> curl -X POST <span class="t-string">http://localhost:8080/api/v1/tarefas</span> \\', delay: 600 },
     { t: '    <span class="t-flag">-H</span> <span class="t-string">"Authorization: Bearer $TOKEN"</span> \\', delay: 400 },
     { t: '    <span class="t-flag">-d</span> <span class="t-string">\'{"titulo":"Dev EGSYS","categoriaId":"...","dataHora":"2026-05-10T09:00:00Z"}\'</span>', delay: 700 },
     { t: '<span class="t-output">→ </span><span class="t-success">201 Created</span> <span class="t-output">· auditoria registrada · evento publicado</span>', delay: 1200, plain: true }

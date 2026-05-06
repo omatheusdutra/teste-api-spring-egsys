@@ -8,8 +8,8 @@ Aceita
 
 O playground acelera a avaliação técnica porque permite registrar, logar, criar tarefas e acionar
 defesas sem depender de um cliente externo. A decisão original era deixá-lo restrito ao profile
-`dev`, evitando exposição acidental. Porém, para uma entrega demonstrável em ambiente publicado, o
-avaliador precisa acessar a experiência guiada sem trocar profile ou importar coleções.
+`dev`, evitando exposição acidental. Para uma demo publicada, a experiência guiada precisa funcionar
+sem troca de profile ou importação de coleções.
 
 O risco real está nos botões ofensivos de demonstração, não no fluxo de demo autenticado. Esses
 botões disparam tentativas como rate limit, IDOR, JWT adulterado, SQLi e mass assignment contra a
