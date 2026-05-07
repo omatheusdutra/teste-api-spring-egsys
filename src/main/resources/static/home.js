@@ -130,6 +130,29 @@
 
 /* ============== TERMINAL TYPEWRITER ============== */
 (function() {
+  const lastCheckEl = document.getElementById('status-last-check');
+  if (!lastCheckEl) return;
+
+  const startedAt = Date.now();
+  const labels = {
+    'pt-BR': { now: 'just now', sec: 'há %ss', min: 'há %sm' },
+    'en-US': { now: 'just now', sec: '%ss ago', min: '%sm ago' },
+  };
+  const lang = (navigator.language || 'pt-BR').startsWith('pt') ? 'pt-BR' : 'en-US';
+  const currentLabels = labels[lang];
+
+  function update() {
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    if (elapsed < 5) lastCheckEl.textContent = currentLabels.now;
+    else if (elapsed < 60) lastCheckEl.textContent = currentLabels.sec.replace('%s', elapsed);
+    else lastCheckEl.textContent = currentLabels.min.replace('%s', Math.floor(elapsed / 60));
+  }
+
+  update();
+  setInterval(update, 1000);
+})();
+
+(function() {
   const term = document.getElementById('terminal');
   const lines = [
     { t: '<span class="t-comment"># 1) registrar usuário</span>', delay: 600 },

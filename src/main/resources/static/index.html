@@ -244,16 +244,13 @@ body {
   max-width: 980px;
   margin-left: auto;
   margin-right: auto;
-  background: linear-gradient(180deg, #fff 0%, #fff 40%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
 }
 .hero h1 .accent {
   display: inline-block;
   text-wrap: balance;
   -webkit-text-wrap: balance;
-  background: linear-gradient(135deg, #FF6B2C 0%, #FF8A55 50%, #22D3EE 100%);
+  background: linear-gradient(135deg, #FF6B2C 0%, #fff 52%, #22D3EE 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1114,20 +1111,19 @@ footer {
   <header class="hero">
     <div class="hero-badge">
       <span class="live-dot"></span>
-      Teste técnico EGSYS · API Spring Boot
+      EGSYS Technical Challenge · Production Mindset
     </div>
+
     <h1>
       Tasks API<br>
       <span class="accent">feita para devolver tempo às pessoas.</span>
     </h1>
+
     <p class="lead">
       Engenharia robusta a serviço de uma ideia simples: software bom é aquele que sai do caminho para que a vida aconteça.
     </p>
+
     <div class="cta-row">
-      <a class="btn btn-playground" href="/playground">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h5M16 17h.01"/></svg>
-        <span>Abrir Playground Interativo</span>
-      </a>
       <a class="btn btn-primary" href="/swagger-ui.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         Abrir Swagger UI
@@ -1136,19 +1132,20 @@ footer {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
         OpenAPI JSON
       </a>
-      <a class="btn btn-secondary" href="/playground#health" title="O health check é protegido por JWT; faça login no Playground para consultar com Authorization Bearer.">
+      <a class="btn btn-secondary" href="/actuator/health">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        Health via Playground
+        Health protegido
       </a>
     </div>
+
     <div class="hero-meta">
       <span>v1.0.0</span>
       <span class="sep">·</span>
-      <span>kotlin 2.x</span>
+      <span>kotlin 2.0</span>
       <span class="sep">·</span>
       <span>jvm 21</span>
       <span class="sep">·</span>
-      <span>spring boot 3.5</span>
+      <span>uptime 99.99%</span>
     </div>
   </header>
 
@@ -1491,28 +1488,5 @@ footer {
 </div>
 
 <script src="/home.js"></script>
-<script>
-(function() {
-  const lastCheckEl = document.getElementById('status-last-check');
-  if (!lastCheckEl) return;
-
-  const startedAt = Date.now();
-  const labels = {
-    'pt-BR': { now: 'just now', sec: 'há %ss', min: 'há %sm' },
-    'en-US': { now: 'just now', sec: '%ss ago', min: '%sm ago' },
-  };
-  const lang = (navigator.language || 'pt-BR').startsWith('pt') ? 'pt-BR' : 'en-US';
-  const t = labels[lang];
-
-  function update() {
-    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
-    if (elapsed < 5) lastCheckEl.textContent = t.now;
-    else if (elapsed < 60) lastCheckEl.textContent = t.sec.replace('%s', elapsed);
-    else lastCheckEl.textContent = t.min.replace('%s', Math.floor(elapsed / 60));
-  }
-  update();
-  setInterval(update, 1000);
-})();
-</script>
 </body>
 </html>
